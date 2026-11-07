@@ -5,11 +5,11 @@ import { formatKzt, parseAmount } from '../domain/money'
 import { useBank } from '../store/useBank'
 import { Badge, Button, Header, List, ListRow, Screen, SectionTitle, Sheet } from '../ui/ui'
 
-/** Synthetic banks for the Open Banking demo — neutral names, no third-party logos. */
+/** Banks for the Open Banking demo: BCC (hackathon organiser, GRAM's partner bank) + neutral test banks. Balances are synthetic. */
 export const OTHER_BANKS = [
-  { name: 'Банк А (тест)', balanceKzt: 184300 },
-  { name: 'Банк Б (тест)', balanceKzt: 62750 },
-  { name: 'Банк В (тест)', balanceKzt: 9400 },
+  { name: 'BCC · Банк ЦентрКредит', balanceKzt: 184300, partner: true },
+  { name: 'Банк А (тест)', balanceKzt: 62750, partner: false },
+  { name: 'Банк Б (тест)', balanceKzt: 9400, partner: false },
 ]
 export const TOPUP_LIMIT = 500_000
 
@@ -249,13 +249,13 @@ export function OtherBanks() {
             <div className="rounded-2xl bg-surface px-4">
               <List>
                 {available.map((b) => (
-                  <ListRow key={b.name} icon={Landmark} title={b.name} sub="Тестовый банк для демо" onClick={() => setPicked(b.name)} />
+                  <ListRow key={b.name} icon={Landmark} tone={b.partner ? 'green' : 'grey'} title={b.name} sub={b.partner ? 'Банк-партнёр GRAM · баланс тестовый' : 'Тестовый банк для демо'} onClick={() => setPicked(b.name)} />
                 ))}
               </List>
             </div>
           </>
         )}
-        <p className="mt-3 text-xs text-ink-3">Открытые API банков Казахстана — гипотеза для проверки. Названия банков в прототипе условные.</p>
+        <p className="mt-3 text-xs text-ink-3">Открытые API банков Казахстана — гипотеза для проверки. Балансы и банки А/Б в прототипе тестовые.</p>
       </div>
 
       <Sheet open={!!bank} onClose={() => { setPicked(null); setState('idle') }}>
