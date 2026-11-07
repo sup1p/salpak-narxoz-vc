@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useMemo } from 'react'
 import type { Status } from '../domain/loyalty'
 
-/** Flat uppercase tag (§12): replaces the tilted Y2K stickers. `rotate` kept for API compat, ignored. */
+/** Pill tag (§13). `rotate` kept for API compat, ignored. Prefer <Badge> from ui.tsx in new code. */
 export function Sticker({
   children,
   bg = '#F6E7D3',
@@ -17,7 +17,7 @@ export function Sticker({
 }) {
   return (
     <span
-      className={`inline-flex items-center rounded-[2px] px-2 py-1 text-[11px] font-semibold uppercase tracking-[.1em] ${className}`}
+      className={`inline-flex h-6 shrink-0 items-center whitespace-nowrap rounded-full px-2.5 text-xs font-semibold ${className}`}
       style={{ background: bg, color: color ?? (bg === '#00AB75' || bg === '#141518' ? '#FFFFFF' : '#141518') }}
     >
       {children}

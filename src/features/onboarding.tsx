@@ -39,7 +39,8 @@ export function Login() {
     }
   }
   const val = step === 'phone' ? phone : step === 'otp' ? code : pin
-  const titles = { phone: 'Altyn by BCC — вход', otp: 'Код из SMS', pin: 'Придумай PIN' }
+  const titles = { phone: 'Вход в Altyn', otp: 'Код из SMS', pin: 'Придумай PIN-код' }
+  const fmtPhone = (p: string) => [p.slice(0, 3), p.slice(3, 6), p.slice(6, 8), p.slice(8, 10)].filter(Boolean).join(' ')
   const hints = {
     phone: 'Золото от 1000 ₸, кешбэк в граммах, прозрачная цена. Введи номер — пришлём код. Это тест, номер не проверяется.',
     otp: 'Тестовый код: 1111',
@@ -49,11 +50,16 @@ export function Login() {
     <Screen>
       <Header back={false} />
       <div className="px-5">
-        <h1 className="text-[28px] font-bold leading-tight">{titles[step]}</h1>
+        <div className="mb-5 flex items-center gap-2">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-gold text-sm font-bold">A</span>
+          <span className="text-[15px] font-semibold">Altyn</span>
+          <span className="text-xs font-semibold text-green">by BCC</span>
+        </div>
+        <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em]">{titles[step]}</h1>
         <p className="mt-2 text-sm text-ink-2">{hints[step]}</p>
-        <div className="num mt-6 flex h-16 items-center rounded-[16px] bg-surface px-4 text-2xl font-semibold tracking-widest">
+        <div className="num mt-6 flex h-14 items-center rounded-xl bg-surface px-4 text-[22px] font-semibold">
           {step === 'phone' && <span className="mr-2 text-ink-3">+7</span>}
-          {step === 'pin' ? '●'.repeat(pin.length).padEnd(4, '○') : val || <span className="text-ink-3">{step === 'phone' ? '7__ ___ __ __' : '____'}</span>}
+          {step === 'pin' ? <span className="tracking-[.4em]">{'●'.repeat(pin.length).padEnd(4, '○')}</span> : val ? (step === 'phone' ? fmtPhone(val) : <span className="tracking-[.4em]">{val}</span>) : <span className="text-ink-3">{step === 'phone' ? '700 000 00 00' : '• • • •'}</span>}
         </div>
         {err && <p className="mt-2 text-sm text-err">{err}</p>}
       </div>

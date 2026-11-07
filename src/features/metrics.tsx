@@ -91,7 +91,7 @@ export function Metrics() {
 
         <div className="mt-6 flex items-baseline justify-between">
           <div className="text-sm font-semibold">Пилот · 1 000 установок</div>
-          <span className="rounded-[2px] bg-gold-soft px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[.08em]">синтетика</span>
+          <span className="inline-flex h-6 items-center rounded-full bg-gold-soft px-2.5 text-xs font-semibold">Синтетика</span>
         </div>
         <Card className="mt-2 space-y-4 py-4">
           {PILOT.map((m) => {

@@ -22,8 +22,8 @@
   --color-err: #D11F23;
   --font-display: 'Roboto Flex', system-ui, sans-serif;
   --font-sans: 'Roboto Flex', system-ui, sans-serif;
-  --radius-card: 4px;
-  --radius-field: 2px;
+  --radius-card: 16px;
+  --radius-field: 12px;
 }
 
 html,
@@ -61,23 +61,15 @@ body {
   }
 }
 
-/* §12 Gold Apple-style ------------------------------------------------- */
-/* display headings: bold grotesk in lowercase, tight tracking */
+/* §13 professional neobank -------------------------------------------- */
 .font-display {
   font-family: var(--font-sans);
-  font-weight: 750;
-  letter-spacing: -0.03em;
-  text-transform: lowercase !important;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
-/* small uppercase overline: «НОВИНКИ», «ТОКЕН ЗОЛОТА · 999,9» */
 .eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--color-ink-2);
 }
-/* sharp corners everywhere except true circles */
-.rounded-\[24px\], .rounded-\[16px\], .rounded-2xl, .rounded-xl, .rounded-\[22px\] { border-radius: 4px !important; }
-.rounded-t-\[32px\] { border-top-left-radius: 8px !important; border-top-right-radius: 8px !important; }
 .gold-img { mix-blend-mode: multiply; display: block; }

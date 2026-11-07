@@ -5,8 +5,7 @@ import { LESSONS, MARKET_PRICE, type QuizQ } from '../data/seed'
 import { formatKzt, formatNum } from '../domain/money'
 import { overpayKzt, quoteBuy } from '../domain/pricing'
 import { selectLevel, useBank } from '../store/useBank'
-import { Sticker } from '../ui/gold'
-import { Button, Card, Header, Screen } from '../ui/ui'
+import { Badge, Button, Card, Header, Screen } from '../ui/ui'
 
 export function Academy() {
   const nav = useNavigate()
@@ -15,7 +14,7 @@ export function Academy() {
   const level = selectLevel(s)
   return (
     <div className="px-5 pb-28 pt-6">
-      <h1 className="text-[28px] font-extrabold lowercase tracking-[-0.03em]">академия</h1>
+      <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em]">Академия</h1>
       <p className="mt-1 text-sm text-ink-2">Короткие уроки по 2 минуты. Учимся ради себя — без призов и баллов.</p>
       <div className="mt-4 bg-ink p-5 text-white">
         <div className="text-xs text-white/60">Финансовая прокачка</div>
@@ -113,9 +112,11 @@ export function LessonScreen() {
         </div>
         {!inQuiz || !q ? (
           <>
-            <Sticker bg="#F6E7D3" rotate={-3} className="mt-6 self-start">
-              {Math.min(card + 1, lesson.cards.length)} / {lesson.cards.length}
-            </Sticker>
+            <div className="mt-6 self-start">
+              <Badge tone="gold">
+                Карточка {Math.min(card + 1, lesson.cards.length)} из {lesson.cards.length}
+              </Badge>
+            </div>
             <p className="mt-5 text-xl font-medium leading-snug">{lesson.cards[Math.min(card, lesson.cards.length - 1)]}</p>
             <div className="mt-auto pb-6">
               <Button onClick={() => setCard(card + 1)}>{card === lesson.cards.length - 1 ? 'Проверить себя' : 'Дальше'}</Button>
@@ -123,9 +124,9 @@ export function LessonScreen() {
           </>
         ) : (
           <>
-            <Sticker bg="#00AB75" rotate={-3} className="mt-6 self-start">
-              {quiz.length > 1 ? `квиз ${qi + 1}/${quiz.length}` : 'квиз'}
-            </Sticker>
+            <div className="mt-6 self-start">
+              <Badge tone="green">{quiz.length > 1 ? `Вопрос ${qi + 1} из ${quiz.length}` : 'Проверь себя'}</Badge>
+            </div>
             <h2 className="mt-4 text-xl font-bold leading-snug">{q.q}</h2>
             <div className="mt-5 space-y-2">
               {q.options.map((o, k) => (
