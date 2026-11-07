@@ -1,4 +1,4 @@
-import { ArrowLeftRight, BookOpen, Coins, FileText, Gift, Link2, Lock, Sparkles, type LucideIcon } from 'lucide-react'
+import { ArrowLeftRight, Landmark, BookOpen, Coins, FileText, Gift, Link2, Lock, Sparkles, type LucideIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { formatGrams, formatNum } from '../domain/money'
 import { selectLevel, useBank } from '../store/useBank'
@@ -59,7 +59,10 @@ export function Services() {
     },
     {
       title: 'Экосистема',
-      tiles: [{ to: '/partner', icon: Link2, tint: 'bg-mint', title: 'Партнёры МФЦА', sub: investor ? (s.partnerConnected ? 'Подключён' : 'Подключить кошелёк') : 'Уровень «Инвестор»', locked: !investor }],
+      tiles: [
+        { to: '/banks', icon: Landmark, tint: 'bg-lilac', title: 'Счета других банков', sub: s.bankLinks.length ? `Подключено: ${s.bankLinks.length}` : 'Все деньги в одной сумме' },
+        { to: '/partner', icon: Link2, tint: 'bg-mint', title: 'Партнёры МФЦА', sub: investor ? (s.partnerConnected ? 'Подключён' : 'Подключить кошелёк') : 'Уровень «Инвестор»', locked: !investor },
+      ],
     },
   ]
   return (
