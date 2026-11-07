@@ -187,13 +187,13 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
           {inputError && <div className="mt-2 text-sm font-medium text-err">{inputError}</div>}
           <div className="mt-5 flex gap-2">
             {presets.map((p, i) => (
-              <button key={i} onClick={() => setInput(String(p).replace('.', ','))} className="num h-10 flex-1 rounded-full bg-surface text-sm font-semibold">
+              <button key={i} onClick={() => setInput(String(p).replace('.', ','))} className="num h-10 flex-1 rounded-[2px] text-sm font-semibold ring-1 ring-inset ring-line active:ring-ink">
                 {buy ? formatNum(p) : ['25%', '50%', 'Всё'][i]}
               </button>
             ))}
           </div>
           {inputError?.startsWith('Не хватает') && (
-            <button onClick={() => { s.topUp(50000) }} className="mt-3 h-10 rounded-full border border-line text-sm font-semibold">
+            <button onClick={() => { s.topUp(50000) }} className="mt-3 h-10 rounded-[2px] text-sm font-semibold ring-1 ring-inset ring-ink">
               Пополнить на 50 000 ₸ (тест)
             </button>
           )}
@@ -209,7 +209,7 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
         <div className="flex flex-1 flex-col px-5">
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-display text-2xl font-bold uppercase">Цена на 30 секунд</div>
+              <div className="text-[24px] font-extrabold lowercase tracking-[-0.03em]">цена на 30 секунд</div>
               <div className="text-sm text-ink-2">Заплатишь ровно то, что видишь</div>
             </div>
             <TimerRing left={left} />

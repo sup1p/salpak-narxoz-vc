@@ -15,9 +15,9 @@ export function Academy() {
   const level = selectLevel(s)
   return (
     <div className="px-5 pb-28 pt-6">
-      <h1 className="text-[28px] font-bold">Академия</h1>
+      <h1 className="text-[28px] font-extrabold lowercase tracking-[-0.03em]">академия</h1>
       <p className="mt-1 text-sm text-ink-2">Короткие уроки по 2 минуты. Учимся ради себя — без призов и баллов.</p>
-      <Card className="mt-4 bg-ink text-white">
+      <div className="mt-4 bg-ink p-5 text-white">
         <div className="text-xs text-white/60">Финансовая прокачка</div>
         <div className="num mt-1 text-3xl font-bold">
           {done.length} из {LESSONS.length}
@@ -32,7 +32,7 @@ export function Academy() {
             ? 'Уровень «Инвестор» открыт.'
             : 'Все уроки открывают уровень «Инвестор» — как проверка готовности, не как награда.'}
         </div>
-      </Card>
+      </div>
       <div className="mt-4 space-y-2 pb-4">
         {LESSONS.map((l, i) => (
           <Card key={l.id} className="flex items-center justify-between" onClick={() => nav(`/academy/${l.id}`)}>

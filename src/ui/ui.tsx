@@ -4,11 +4,12 @@ import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 type BtnVariant = 'primary' | 'gold' | 'secondary' | 'ghost'
+// §12: rectangular buttons, uppercase tracked labels, flat fills
 const btn: Record<BtnVariant, string> = {
   primary: 'bg-ink text-white',
-  gold: 'gold-grad text-ink',
-  secondary: 'bg-surface text-ink',
-  ghost: 'bg-transparent text-ink underline underline-offset-4',
+  gold: 'bg-gold text-ink',
+  secondary: 'bg-white text-ink ring-1 ring-inset ring-ink',
+  ghost: 'bg-transparent text-ink underline underline-offset-4 normal-case tracking-normal',
 }
 
 export function Button({
@@ -32,7 +33,7 @@ export function Button({
     <button
       onClick={onClick}
       disabled={disabled || loading}
-      className={`${btn[variant]} ${small ? 'h-11 px-5 text-sm' : 'h-14 w-full text-base'} inline-flex items-center justify-center gap-2 rounded-full font-semibold transition active:scale-[.98] disabled:opacity-40 ${className}`}
+      className={`${btn[variant]} ${small ? 'h-11 px-4 text-[12px]' : 'h-[52px] w-full text-[13px]'} inline-flex items-center justify-center gap-2 rounded-[2px] font-semibold uppercase tracking-[.1em] transition active:opacity-80 disabled:opacity-40 ${className}`}
     >
       {loading ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" /> : children}
     </button>
@@ -58,7 +59,7 @@ export function Header({ title, back = true, right }: { title?: string; back?: b
       ) : (
         <span />
       )}
-      {title && <div className="text-sm font-semibold">{title}</div>}
+      {title && <div className="text-[15px] font-semibold lowercase">{title}</div>}
       <div className="min-w-11">{right}</div>
     </div>
   )
@@ -70,8 +71,8 @@ export function Screen({ children, className = '' }: { children: ReactNode; clas
 
 export function TestBadge() {
   return (
-    <div className="mx-5 rounded-2xl bg-surface px-4 py-2 text-xs text-ink-2">
-      🧪 Тестовый режим — реальные деньги и данные не используются
+    <div className="eyebrow mx-5 border-t border-line pt-3 !normal-case !tracking-normal">
+      Тестовый режим — реальные деньги и данные не используются
     </div>
   )
 }
@@ -114,7 +115,7 @@ export function Toast({ show, children }: { show: boolean; children: ReactNode }
     <AnimatePresence>
       {show && (
         <motion.div
-          className="absolute left-1/2 top-4 z-50 -translate-x-1/2 whitespace-nowrap rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white shadow-lg"
+          className="absolute left-1/2 top-4 z-50 -translate-x-1/2 whitespace-nowrap rounded-[2px] bg-ink px-5 py-3 text-sm font-semibold text-white shadow-lg"
           initial={{ y: -60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -60, opacity: 0 }}

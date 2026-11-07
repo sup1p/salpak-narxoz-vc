@@ -2,12 +2,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useMemo } from 'react'
 import type { Status } from '../domain/loyalty'
 
-/** Our own stickers (DESIGN-SYSTEM §5) — not UGLYCASH assets. */
+/** Flat uppercase tag (§12): replaces the tilted Y2K stickers. `rotate` kept for API compat, ignored. */
 export function Sticker({
   children,
-  bg = '#DCA86E',
+  bg = '#F6E7D3',
   color,
-  rotate = -6,
   className = '',
 }: {
   children: React.ReactNode
@@ -18,8 +17,8 @@ export function Sticker({
 }) {
   return (
     <span
-      className={`inline-block rounded-xl border-2 border-white px-3 py-1.5 font-display text-sm font-semibold uppercase tracking-wide shadow-[0_6px_16px_rgba(20,21,24,.18)] ${className}`}
-      style={{ background: bg, color: color ?? (bg === '#00AB75' ? '#FFFFFF' : '#141518'), transform: `rotate(${rotate}deg)` }}
+      className={`inline-flex items-center rounded-[2px] px-2 py-1 text-[11px] font-semibold uppercase tracking-[.1em] ${className}`}
+      style={{ background: bg, color: color ?? (bg === '#00AB75' || bg === '#141518' ? '#FFFFFF' : '#141518') }}
     >
       {children}
     </span>
@@ -67,38 +66,31 @@ export function BarKeychain({ size = 120, className = '' }: { size?: number; cla
   )
 }
 
+/** Which render to show for an amount of gold (CONCEPT §5.6). */
+export function goldRender(grams: number): { src: string; label: string } {
+  if (grams >= 1) return { src: '/gold/bar.jpg', label: 'слиток' }
+  if (grams >= 0.1) return { src: '/gold/pile.jpg', label: 'горка' }
+  return { src: '/gold/pinch.jpg', label: 'щепотка' }
+}
+
 /**
- * Capsule with gold "sand": level ∝ grams (< 1 g fills the capsule).
- * `pulse` re-keys to animate a refill.
+ * Gold visual: photoreal render picked by amount — pinch < 0.1 g, pile 0.1–1 g, bar >= 1 g.
+ * Kept under the old name so callers don't change. `pulse` re-keys for a small "settle" bounce.
  */
 export function GoldCapsule({ grams, height = 150, pulse = 0 }: { grams: number; height?: number; pulse?: number }) {
-  // sqrt so tiny amounts are still visible as sand
-  const level = Math.max(0.05, Math.min(1, Math.sqrt(grams)))
-  const width = height * 0.46
-  const grains = useMemo(
-    () => Array.from({ length: 26 }, (_, i) => ({ x: ((i * 37) % 80) + 10, y: ((i * 53) % 90) + 5, r: 0.8 + ((i * 7) % 3) * 0.5 })),
-    [],
-  )
+  const { src, label } = goldRender(grams)
+  const width = Math.round(height * 1.5)
   return (
-    <div className="relative" style={{ width, height }}>
-      <div className="absolute inset-0 overflow-hidden rounded-full border-[3px] border-white bg-white/70 shadow-[inset_0_0_0_1px_#E7E7EB,0_8px_24px_rgba(20,21,24,.10)]">
-        <motion.div
-          key={pulse}
-          className="gold-grad absolute inset-x-0 bottom-0"
-          initial={{ height: `${Math.max(0, level * 100 - 6)}%` }}
-          animate={{ height: `${level * 100}%` }}
-          transition={{ duration: 0.9, ease: 'easeOut' }}
-        >
-          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-            {grains.map((g, i) => (
-              <circle key={i} cx={g.x} cy={g.y} r={g.r} fill="#FBEBD5" opacity=".7" />
-            ))}
-          </svg>
-          <div className="absolute inset-x-0 top-0 h-2 rounded-full bg-gold-light/80 blur-[2px]" />
-        </motion.div>
-        <div className="absolute left-[18%] top-[8%] h-[70%] w-[14%] rounded-full bg-white/60" />
-      </div>
-    </div>
+    <motion.img
+      key={`${src}-${pulse}`}
+      src={src}
+      alt={`Твоё золото: ${label}`}
+      className="gold-img object-cover"
+      style={{ width, height }}
+      initial={{ scale: pulse ? 0.94 : 1 }}
+      animate={{ scale: 1 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 14 }}
+    />
   )
 }
 

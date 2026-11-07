@@ -51,7 +51,7 @@ export function Cashback() {
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={`h-14 rounded-full text-sm font-semibold ${mode === m ? (m === 'gold' ? 'gold-grad' : 'bg-ink text-white') : 'bg-surface'}`}
+              className={`h-12 rounded-[2px] text-[12px] font-semibold uppercase tracking-[.1em] ${mode === m ? (m === 'gold' ? 'bg-gold text-ink' : 'bg-ink text-white') : 'ring-1 ring-inset ring-line'}`}
             >
               {m === 'gold' ? 'В золоте' : 'В тенге'}
             </button>
