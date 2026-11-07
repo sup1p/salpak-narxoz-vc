@@ -1,12 +1,14 @@
-import { ArrowDownLeft, ArrowRight, Landmark, Receipt, ScanLine, Bell, BookOpen, ChevronRight, Coffee, Coins, CreditCard, FileText, Gift, PiggyBank, Plus, Repeat, Sparkles, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowRight, Landmark, ScanLine, BookOpen, ChevronRight, CreditCard, FileText, Gift, PiggyBank, Plus, Repeat, Sparkles, type LucideIcon } from 'lucide-react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PARTNER, USDT_KZT } from '../data/seed'
 import { nextStatusGap, STATUS_LABEL } from '../domain/loyalty'
 import { formatGrams, formatKzt, formatNum } from '../domain/money'
-import { hasRealBuy, selectCashbackStats, selectOtherBanksKzt, selectPortfolio, selectRegular, selectStatus, useBank } from '../store/useBank'
+import { hasRealBuy, selectCashbackStats, selectOtherBanksKzt, selectPortfolio, selectRegular, selectStatus, selectStatusPortfolio, useBank, type Op } from '../store/useBank'
 import { GoldCapsule } from '../ui/gold'
-import { Badge, Balance, List, ListRow, Logo, SectionTitle, TabPage } from '../ui/ui'
-import { useUnreadCount } from './messages'
+import { Badge, Balance, List, ListRow, Logo, SectionTitle, Sheet, TabPage } from '../ui/ui'
+import { CASHBACK_RATE } from '../domain/loyalty'
+import { OpDetail, opAmounts, opIcon } from './opView'
 
 function Action({ icon: Icon, label, onClick, gold }: { icon: LucideIcon; label: string; onClick: () => void; gold?: boolean }) {
   return (
@@ -23,11 +25,13 @@ function Action({ icon: Icon, label, onClick, gold }: { icon: LucideIcon; label:
 export function Home() {
   const nav = useNavigate()
   const s = useBank()
-  const unread = useUnreadCount()
+  const [open, setOpen] = useState<Op | null>(null)
   const portfolio = selectPortfolio(s)
   const status = selectStatus(s)
   const regular = selectRegular(s)
-  const gap = nextStatusGap(portfolio, regular)
+  // status is computed on purchase cost, so the progress uses the same base (review fix)
+  const statusBase = selectStatusPortfolio(s)
+  const gap = nextStatusGap(statusBase, regular)
   const partnerKzt = s.partnerConnected ? PARTNER.usdt * USDT_KZT : 0
   const otherBanks = selectOtherBanksKzt(s)
   const total = portfolio + partnerKzt + otherBanks
@@ -39,16 +43,17 @@ export function Home() {
 
 
   const forYou: { icon: LucideIcon; title: string; sub: string; to: string; bg: string }[] = [
-    !bought
-      ? { icon: Coins, title: 'Первая покупка без риска', sub: 'Режим Пробы', to: '/buy?try=1', bg: 'bg-lime' }
-      : s.cashbackMode !== 'gold'
-        ? { icon: Sparkles, title: 'Кешбэк в граммах', sub: 'Покупки картой → золото', to: '/cashback', bg: 'bg-lime' }
-        : { icon: Gift, title: 'Позови друга', sub: '+0,05 г вам обоим', to: '/invite', bg: 'bg-lime' },
+    s.cashbackMode !== 'gold'
+      ? { icon: Sparkles, title: 'Кешбэк в граммах', sub: 'Платежи картой → золото', to: '/cashback', bg: 'bg-lime' }
+      : { icon: Gift, title: 'Позови друга', sub: 'Другу 0,005 г в подарок', to: '/invite', bg: 'bg-lime' },
     { icon: BookOpen, title: s.lessonsDone.includes('spread') ? 'Академия' : 'Спред за 2 минуты', sub: `${s.lessonsDone.length} из 7 уроков`, to: s.lessonsDone.includes('spread') ? '/academy' : '/academy/spread', bg: 'bg-lilac' },
-    { icon: FileText, title: 'Декларация', sub: 'Подготовим за тебя', to: '/tax', bg: 'bg-peach' },
+    s.gold > 0
+      ? { icon: FileText, title: 'Декларация', sub: 'Подготовим за тебя', to: '/tax', bg: 'bg-peach' }
+      : { icon: Landmark, title: 'Счета других банков', sub: 'Все деньги в одной сумме', to: '/banks', bg: 'bg-peach' },
   ]
 
-  const recent = s.history.filter((o) => o.id !== 'seed-cb').slice(0, 3)
+  // cashback rows are shown inside their payment row
+  const recent = s.history.filter((o) => !o.parentId).slice(0, 3)
 
   return (
     <TabPage>
@@ -62,15 +67,6 @@ export function Home() {
             <div className="text-[11px] font-semibold text-green">by BCC</div>
           </div>
         </div>
-        <div className="flex gap-2">
-        <button aria-label="Сканировать QR" onClick={() => nav('/scan')} className="grid h-10 w-10 place-items-center rounded-full bg-surface">
-          <ScanLine size={20} strokeWidth={1.9} />
-        </button>
-        <button aria-label="Сообщения" onClick={() => nav('/messages')} className="relative grid h-10 w-10 place-items-center rounded-full bg-surface">
-          <Bell size={20} strokeWidth={1.9} />
-          {unread > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-err" />}
-        </button>
-        </div>
       </div>
 
       <div className="px-4">
@@ -79,28 +75,29 @@ export function Home() {
           <div className="flex items-center justify-between">
             <div className="text-sm font-medium text-ink-2">Всего</div>
             <Badge tone="gold">
-              {STATUS_LABEL[status]} · кешбэк {status === 'sand' ? '1' : status === 'nugget' ? '1,5' : '2'}%
+              Кешбэк {STATUS_LABEL[status]} · {formatNum(CASHBACK_RATE[status] * 100, 1)}%
             </Badge>
           </div>
           <Balance value={total} className="mt-1 text-[42px] font-extrabold tracking-[-0.04em]" />
-          <div className="num mt-1 text-xs text-ink-3">≈ {formatGrams(total / s.market, 2)} золота — эквивалент, не золото</div>
         </div>
 
         <div data-tour="actions" className="mt-5 grid grid-cols-3">
           <Action icon={ArrowDownLeft} label="Пополнить" onClick={() => nav('/topup')} />
-          <Action icon={Receipt} label="Платежи" onClick={() => nav('/payments')} />
+          <Action icon={ScanLine} label="Оплатить по QR" onClick={() => nav('/scan')} />
           <Action icon={Plus} label="Купить золото" gold onClick={() => nav(buyTo)} />
         </div>
 
         {/* hero banner: your gold */}
         <div data-tour="gold" className="relative mt-6 overflow-hidden rounded-3xl bg-gold-soft">
-          <div className="absolute -right-6 top-6">
-            <GoldCapsule grams={s.gold} height={140} />
-          </div>
+          {s.gold > 0 && (
+            <div className="absolute -right-6 top-6">
+              <GoldCapsule grams={s.gold} height={140} />
+            </div>
+          )}
           <div className="relative p-5">
             <div className="text-[13px] font-semibold text-[#7A4A00]">Твоё золото · проба 999,9</div>
             <div className="num mt-2 text-[34px] font-extrabold leading-none tracking-[-0.03em]">{formatGrams(s.gold)}</div>
-            <div className="num mt-1 text-sm font-medium text-[#5C3A00]">≈ {formatKzt(s.gold * s.market, 0)}</div>
+            <div className="num mt-1 text-sm font-medium text-[#5C3A00]">{s.gold > 0 ? `≈ ${formatKzt(s.gold * s.market, 0)}` : 'Первый грамм — от 1000 ₸'}</div>
             {s.gold < 1 && (
               <div className="mt-4 w-[55%]">
                 <div className="h-1.5 overflow-hidden rounded-full bg-white/70">
@@ -112,9 +109,6 @@ export function Home() {
             <div className="mt-5 flex gap-2">
               <button onClick={() => nav('/gold')} className="flex h-11 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white">
                 Перейти к золоту <ArrowRight size={16} />
-              </button>
-              <button onClick={() => nav(buyTo)} className="h-11 rounded-xl bg-white px-4 text-sm font-semibold">
-                Купить
               </button>
             </div>
           </div>
@@ -159,28 +153,33 @@ export function Home() {
             <div className="text-[17px] font-extrabold">Золотой дождь</div>
             <span className="text-xs text-white/60">{s.cashbackMode === 'gold' ? 'Кешбэк в золоте' : 'Кешбэк в тенге'}</span>
           </div>
-          <div className="mt-3 flex items-end justify-between">
+          <div className="mt-3 grid grid-cols-2 gap-3 border-b border-white/10 pb-3">
             <div>
               <div className="text-xs text-white/60">Кешбэк в этом месяце</div>
-              <div className="num text-[22px] font-extrabold tracking-[-0.02em]">+{formatKzt(cb.monthTotalKzt, 0)}</div>
+              <div className="num text-[20px] font-extrabold tracking-[-0.02em]">+{formatKzt(cb.monthTotalKzt, 0)}</div>
+              {cb.monthGrams > 0 && <div className="num text-xs text-white/60">из них {formatNum(cb.monthGrams, 4)} г золотом</div>}
             </div>
-            <div className="num text-right text-xs text-white/60">
-              {cb.monthGrams > 0 && <div>{formatNum(cb.monthGrams, 4)} г золотом</div>}
-              <div>лимит {formatKzt(cb.usedKzt, 0)} / {formatKzt(cb.capKzt, 0)}</div>
+            <div>
+              <div className="text-xs text-white/60">Осталось до лимита</div>
+              <div className="num text-[20px] font-extrabold tracking-[-0.02em]">{formatKzt(Math.max(0, cb.capKzt - cb.usedKzt), 0)}</div>
+              <div className="num text-xs text-white/60">из {formatKzt(cb.capKzt, 0)} в месяц</div>
             </div>
           </div>
           {gap ? (
             <>
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/15">
-                <div className="h-full rounded-full bg-gold" style={{ width: `${Math.min(100, (portfolio / (gap.next === 'nugget' ? 100000 : 500000)) * 100)}%` }} />
+              <div className="mt-3 flex justify-between text-xs text-white/60">
+                <span>Статус «{STATUS_LABEL[status]}» → «{STATUS_LABEL[gap.next]}»</span>
+                <span className="num">ещё {formatKzt(Math.max(0, gap.gapKzt), 0)}</span>
               </div>
-              <div className="num mt-2 text-[13px] text-white/70">
-                До статуса «{STATUS_LABEL[gap.next]}» — ещё {formatKzt(Math.max(0, gap.gapKzt), 0)}
-                {gap.next === 'bar' && regular < 2 ? ' и пополнения 2 месяца подряд' : ''}
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/15">
+                <div className="h-full rounded-full bg-gold" style={{ width: `${Math.min(100, (statusBase / (gap.next === 'nugget' ? 100000 : 500000)) * 100)}%` }} />
+              </div>
+              <div className="mt-1.5 text-xs text-white/50">
+                Считаем по деньгам в банке и цене покупки золота{gap.next === 'bar' && regular < 2 ? '; для «Макс» ещё пополнения 2 месяца подряд' : ''}
               </div>
             </>
           ) : (
-            <div className="mt-2 text-[13px] text-white/70">Максимальный статус — кешбэк 2%</div>
+            <div className="mt-3 text-[13px] text-white/70">Максимальный статус — кешбэк 2%</div>
           )}
         </button>
 
@@ -196,21 +195,30 @@ export function Home() {
         </SectionTitle>
         {recent.length ? (
           <List>
-            {recent.map((o) => (
-              <ListRow
-                key={o.id}
-                icon={o.type === 'topup' ? ArrowDownLeft : o.type === 'purchase' ? Coffee : o.type === 'cashback' ? Sparkles : o.asset === 'usdt' ? Repeat : Coins}
-                tone={o.type === 'buy' || o.type === 'cashback' ? 'gold' : 'grey'}
-                title={o.title}
-                sub={new Date(o.at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                value={o.kzt ? `${o.kzt > 0 ? '+' : '−'}${formatKzt(Math.abs(o.kzt), 0)}` : `${o.grams > 0 ? '+' : '−'}${formatNum(Math.abs(o.grams), 4)} ${o.asset === 'usdt' ? 'USDT' : 'г'}`}
-              />
-            ))}
+            {recent.map((o) => {
+              const [a, b] = opAmounts(o)
+              const ic = opIcon(o)
+              return (
+                <ListRow
+                  key={o.id}
+                  icon={ic.icon}
+                  tone={ic.tone}
+                  title={o.type === 'purchase' ? o.title.split(' · ')[0] : o.title}
+                  sub={new Date(o.at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  value={a}
+                  valueSub={b}
+                  onClick={() => setOpen(o)}
+                />
+              )
+            })}
           </List>
         ) : (
           <div className="rounded-2xl bg-surface p-4 text-sm text-ink-2">Пока операций нет — начни с покупки золота от 1000 ₸.</div>
         )}
       </div>
+      <Sheet open={!!open} onClose={() => setOpen(null)}>
+        {open && <OpDetail op={open} onClose={() => setOpen(null)} />}
+      </Sheet>
     </TabPage>
   )
 }
