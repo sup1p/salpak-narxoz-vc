@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import { INITIAL, LESSONS, MARKET_PRICE, USDT_KZT } from '../data/seed'
+import { INITIAL, MARKET_PRICE, USDT_KZT } from '../data/seed'
 import { MIN_BUY, type Receipt } from '../domain/pricing'
-import { cashbackKzt, monthKey, portfolioKzt, regularStreak, statusFor } from '../domain/loyalty'
+import { cashbackKzt, monthKey, portfolioKzt, regularStreak, statusFor, statusPortfolioKzt } from '../domain/loyalty'
 import { round } from '../domain/money'
 
 export type OpType = 'topup' | 'buy' | 'sell' | 'cashback' | 'gift_out' | 'bonus' | 'purchase'
@@ -16,9 +16,14 @@ export interface Op {
   asset?: 'gold' | 'usdt'
   at: number
   receipt?: Receipt
+  /** payments: category id for the icon, cashback earned by this payment */
+  category?: string
+  cbKzt?: number
+  cbGrams?: number
+  /** cashback op: the payment it belongs to */
+  parentId?: string
 }
 export type OpError = 'INSUFFICIENT_FUNDS' | 'INSUFFICIENT_GOLD' | 'BELOW_MIN' | 'QUOTE_EXPIRED' | 'DUPLICATE'
-export type Level = 'start' | 'saver' | 'investor'
 
 /** Product events for the hypothesis metrics (CONCEPT.md §9). */
 export type EventName =
@@ -41,6 +46,7 @@ export type EventName =
   | 'otc_usdt'
   | 'external_topup'
   | 'bank_linked'
+  | 'risk_test_passed'
 export interface Evt {
   name: EventName
   at: number
@@ -80,8 +86,10 @@ export interface BankState {
   topupMonths: string[]
   /** demo override for the regularity streak */
   regularMonths: number
-  /** demo override for the level */
-  level: Level
+  /** passed the digital-assets risk test (gate for USDT and AIFC partners) */
+  riskTestPassed: boolean
+  /** shows demo-only controls (fast-forward timer, forced errors) */
+  demoMode: boolean
   partnerConnected: boolean
   lessonsDone: string[]
   realizedKzt: number
@@ -108,14 +116,15 @@ interface Actions {
   revokeBank(id: string): void
   debitBank(id: string, kzt: number): void
   confirm(r: Receipt, now: number): OpError | null
-  payCard(spendKzt: number, title?: string): { grams: number; kzt: number; error?: OpError }
+  payCard(spendKzt: number, title?: string, category?: string): { grams: number; kzt: number; error?: OpError }
   setCashbackMode(m: 'kzt' | 'gold'): void
   setSandbox(on: boolean): void
   bumpMarket(pct: number): void
   completeLesson(id: string): void
   connectPartner(): void
   revokePartner(): void
-  setLevel(l: Level): void
+  passRiskTest(): void
+  setDemoMode(on: boolean): void
   setRegularMonths(n: number): void
   sendGift(grams: number, to: string): OpError | null
   simulateFriendPurchase(name: string): void
@@ -125,7 +134,9 @@ interface Actions {
   reset(): void
 }
 
-export const FRIEND_BONUS_G = 0.05
+/** Invite: bank-funded gift to the friend and the bonus to both after the friend's first purchase. */
+export const GIFT_G = 0.005
+export const FRIEND_BONUS_G = 0.005
 const ONCE: EventName[] = ['bank_linked', 'install', 'activation', 'first_purchase', 'cashback_gold', 'return_d1', 'return_d7', 'sandbox_try', 'sandbox_to_real', 'spread_understood', 'risk_facts_seen', 'partner_connected']
 
 const fresh = (): BankState => {
@@ -140,13 +151,14 @@ const fresh = (): BankState => {
     gold: INITIAL.gold,
     avgPrice: INITIAL.avgPrice,
     usdt: 0,
-    sandbox: { on: false, cardKzt: INITIAL.sandboxKzt, gold: 0, used: false },
+    sandbox: { on: false, cardKzt: INITIAL.cardKzt, gold: 0, used: false },
     cashbackMode: 'kzt',
     cashbackUsedKzt: 0,
     cashbackMonth: monthKey(now),
     topupMonths: [],
     regularMonths: 0,
-    level: 'start',
+    riskTestPassed: false,
+    demoMode: false,
     partnerConnected: false,
     lessonsDone: [],
     realizedKzt: 0,
@@ -158,7 +170,7 @@ const fresh = (): BankState => {
     messagesReadAt: 0,
     extCards: [{ id: 'card-4821', last4: '4821' }],
     bankLinks: [],
-    history: [{ id: 'seed-cb', type: 'cashback', title: 'Кешбэк за прошлые покупки', kzt: 0, grams: INITIAL.gold, at: now - 86400000 * 3 }],
+    history: [],
     usedQuoteIds: [],
   }
 }
@@ -268,41 +280,37 @@ export const useBank = create<BankState & Actions>()(
         return null
       },
 
-      payCard: (spendKzt, title = 'Кофе') => {
+      payCard: (spendKzt, title = 'Покупка картой', category = 'qr') => {
         const now = Date.now()
         const s0 = get()
         // monthly cap resets when the calendar month changes
         if (s0.cashbackMonth !== monthKey(now)) set({ cashbackMonth: monthKey(now), cashbackUsedKzt: 0 })
         const s = get()
         if (spendKzt > s.cardKzt) return { grams: 0, kzt: 0, error: 'INSUFFICIENT_FUNDS' as const }
-        const status = selectStatus(s)
-        const cb = cashbackKzt(spendKzt, status, s.cashbackUsedKzt)
-        const ops: Op[] = [{ id: opId(), type: 'purchase', title, kzt: -spendKzt, grams: 0, at: now }]
-        if (s.cashbackMode === 'gold') {
-          const g = round(cb / s.market, 6)
-          const newGold = round(s.gold + g, 6)
-          set({
-            cardKzt: s.cardKzt - spendKzt,
-            gold: newGold,
-            avgPrice: newGold ? (s.avgPrice * s.gold + s.market * g) / newGold : s.avgPrice,
-            cashbackUsedKzt: s.cashbackUsedKzt + cb,
-            history: [{ id: opId(), type: 'cashback', asset: 'gold', title: 'Кешбэк в золоте', kzt: 0, grams: g, at: now }, ...ops, ...s.history],
-          })
-          return { grams: g, kzt: cb }
-        }
+        const cb = cashbackKzt(spendKzt, selectStatus(s), s.cashbackUsedKzt)
+        const gold = s.cashbackMode === 'gold'
+        const g = gold ? round(cb / s.market, 6) : 0
+        const payId = opId()
+        // the payment row carries its own cashback so each line explains itself (review 2026-11-07)
+        const pay: Op = { id: payId, type: 'purchase', title, category, kzt: -spendKzt, grams: 0, at: now, cbKzt: gold ? 0 : cb, cbGrams: g }
+        const cbOp: Op | null = cb > 0 ? { id: opId(), parentId: payId, type: 'cashback', asset: gold ? 'gold' : undefined, title: gold ? 'Кешбэк в золоте' : 'Кешбэк в ₸', kzt: gold ? 0 : cb, grams: g, at: now } : null
+        const newGold = round(s.gold + g, 6)
         set({
-          cardKzt: round(s.cardKzt - spendKzt + cb, 1),
+          cardKzt: round(s.cardKzt - spendKzt + (gold ? 0 : cb), 1),
+          gold: newGold,
+          avgPrice: gold && newGold ? (s.avgPrice * s.gold + s.market * g) / newGold : s.avgPrice,
           cashbackUsedKzt: s.cashbackUsedKzt + cb,
-          history: [{ id: opId(), type: 'cashback', title: 'Кешбэк в ₸', kzt: cb, grams: 0, at: now }, ...ops, ...s.history],
+          history: [...(cbOp ? [cbOp] : []), pay, ...s.history],
         })
-        return { grams: 0, kzt: cb }
+        return { grams: g, kzt: cb }
       },
 
       setCashbackMode: (m) => {
         set({ cashbackMode: m })
         if (m === 'gold') get().track('cashback_gold')
       },
-      setSandbox: (on) => set((s) => ({ sandbox: { ...s.sandbox, on } })),
+      // Проба spends the same money «понарошку»: snapshot real balances, never touch them
+      setSandbox: (on) => set((s) => ({ sandbox: on ? { on, used: s.sandbox.used, cardKzt: s.cardKzt, gold: s.gold } : { ...s.sandbox, on } })),
       bumpMarket: (pct) => set((s) => ({ market: round(s.market * (1 + pct), 0) })),
       completeLesson: (id) => {
         const s = get()
@@ -316,17 +324,19 @@ export const useBank = create<BankState & Actions>()(
         get().track('partner_connected')
       },
       revokePartner: () => set({ partnerConnected: false }),
-      setLevel: (l) => set({ level: l }),
+      passRiskTest: () => {
+        set({ riskTestPassed: true })
+        get().track('risk_test_passed')
+      },
+      setDemoMode: (on) => set({ demoMode: on }),
       setRegularMonths: (n) => set({ regularMonths: n }),
 
       sendGift: (grams, to) => {
+        // gift is paid by the bank (marketing budget), the user's gold is not touched
         const s = get()
-        if (grams > s.gold) return 'INSUFFICIENT_GOLD'
         set({
-          gold: round(s.gold - grams, 6),
           giftsOutGrams: round(s.giftsOutGrams + grams, 6),
           invites: [{ name: to, status: 'invited', at: Date.now() }, ...s.invites.filter((i) => i.name !== to)],
-          history: [{ id: opId(), type: 'gift_out', asset: 'gold', title: `Подарок: ${to}`, kzt: 0, grams: -grams, at: Date.now() }, ...s.history],
         })
         get().track('invite_sent')
         return null
@@ -368,7 +378,8 @@ export const useBank = create<BankState & Actions>()(
     }),
     {
       name: 'gram-demo',
-      version: 2,
+      // v3: review fixes changed the seed (no starting gold) and removed levels — start clean
+      version: 3,
       migrate: () => fresh() as never,
       storage: createJSONStorage(() => {
         try {
@@ -386,17 +397,13 @@ export const useBank = create<BankState & Actions>()(
 
 export const selectRegular = (s: BankState) => Math.max(s.regularMonths, regularStreak(s.topupMonths, Date.now()))
 export const selectPortfolio = (s: BankState) => portfolioKzt(s, s.market, USDT_KZT)
-export const selectStatus = (s: BankState) => statusFor(selectPortfolio(s), selectRegular(s))
+/** Status by purchase cost, not market value (review 2026-11-07). */
+export const selectStatusPortfolio = (s: BankState) => statusPortfolioKzt(s, USDT_KZT)
+export const selectStatus = (s: BankState) => statusFor(selectStatusPortfolio(s), selectRegular(s))
 export const hasRealBuy = (s: BankState) => s.history.some((o) => o.type === 'buy' && o.asset !== 'usdt')
 
-const RANK: Record<Level, number> = { start: 0, saver: 1, investor: 2 }
-/** Level unlocks automatically; the demo override can only raise it. */
-export function selectLevel(s: BankState): Level {
-  let computed: Level = 'start'
-  if (hasRealBuy(s) && s.lessonsDone.length >= 2) computed = 'saver'
-  if (computed === 'saver' && s.lessonsDone.length >= LESSONS.length) computed = 'investor'
-  return RANK[s.level] > RANK[computed] ? s.level : computed
-}
+/** USDT and AIFC partners need the risk test (not lessons). */
+export const selectInvestorAccess = (s: BankState) => s.riskTestPassed
 
 /** Accounts in other banks (read-only): shown in the total, excluded from the loyalty status. */
 export const selectOtherBanksKzt = (s: BankState) => s.bankLinks.reduce((a, b) => a + b.balanceKzt, 0)
@@ -424,8 +431,7 @@ export interface CashbackStats {
 export function selectCashbackStats(s: BankState, now = Date.now()): CashbackStats {
   const month = monthKey(now)
   const cb = s.history.filter((o) => o.type === 'cashback')
-  // the seeded 'past purchases' cashback is starting balance, not this month's earning
-  const inMonth = cb.filter((o) => o.id !== 'seed-cb' && monthKey(o.at) === month)
+  const inMonth = cb.filter((o) => monthKey(o.at) === month)
   const sum = (xs: Op[], f: (o: Op) => number) => xs.reduce((a, o) => a + f(o), 0)
   const monthKzt = sum(inMonth, (o) => o.kzt)
   const monthGrams = sum(inMonth, (o) => o.grams)

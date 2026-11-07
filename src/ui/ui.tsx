@@ -190,7 +190,7 @@ export function Sheet({ open, onClose, children }: { open: boolean; onClose: () 
       {open && (
         <motion.div className="absolute inset-0 z-50 flex items-end bg-black/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
           <motion.div
-            className="w-full rounded-t-3xl bg-paper p-5 pb-8"
+            className="no-scrollbar max-h-[90%] w-full overflow-y-auto rounded-t-3xl bg-paper p-5 pb-8"
             initial={{ y: 400 }}
             animate={{ y: 0 }}
             exit={{ y: 400 }}

@@ -4,7 +4,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { formatKzt, formatNum, parseAmount } from '../domain/money'
 import { previewCashback, selectStatus, useBank } from '../store/useBank'
 import { MiningRain } from '../ui/gold'
-import { Button, Header, List, ListRow, Screen, SectionTitle, Sheet } from '../ui/ui'
+import { opAmounts, opIcon } from './opView'
+import { Button, Header, List, ListRow, PageTitle, Screen, SectionTitle, Sheet, TabPage } from '../ui/ui'
 
 /** Payment categories (CONCEPT §5.14). Neutral provider names — no third-party brands. */
 interface Provider {
@@ -85,8 +86,8 @@ export function Payments() {
   const list = PROVIDERS.filter((p) => p.id !== 'qr' && (p.title + p.provider).toLowerCase().includes(q.toLowerCase()))
 
   return (
-    <Screen>
-      <Header title="Платежи" />
+    <TabPage>
+      <PageTitle>Платежи</PageTitle>
       <div className="px-4 pb-8">
         <button onClick={() => nav('/scan')} className="flex w-full items-center gap-4 rounded-3xl bg-ink p-5 text-left text-white">
           <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gold text-ink">
@@ -121,14 +122,21 @@ export function Payments() {
             <SectionTitle>Недавние</SectionTitle>
             <List>
               {recent.map((o) => (
-                <ListRow key={o.id} icon={QrCode} title={o.title} sub={new Date(o.at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} value={`−${formatKzt(-o.kzt, 0)}`} />
+                <ListRow
+                  key={o.id}
+                  icon={opIcon(o).icon}
+                  title={o.title.split(' · ')[0]}
+                  sub={new Date(o.at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  value={`−${formatKzt(-o.kzt, 0)}`}
+                  valueSub={opAmounts(o)[1]}
+                />
               ))}
             </List>
           </>
         )}
         <p className="mt-4 text-xs text-ink-3">Платежи — это траты картой GRAM: за них начисляется кешбэк по твоему статусу. Поставщики в прототипе условные.</p>
       </div>
-    </Screen>
+    </TabPage>
   )
 }
 
@@ -161,7 +169,7 @@ export function PayForm() {
     setBusy(true)
     setTimeout(() => {
       setBusy(false)
-      const r = useBank.getState().payCard(amount, `${p.title} · ${p.provider}`)
+      const r = useBank.getState().payCard(amount, `${p.title} · ${p.provider}`, p.id)
       if (r.error) return setErr('Не хватает денег на карте GRAM.')
       setDone({ grams: r.grams, kzt: r.kzt })
       if (s.cashbackMode === 'gold' && r.grams > 0) {

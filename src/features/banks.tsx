@@ -148,9 +148,11 @@ export function TopUp() {
             <span className="font-semibold">Сразу</span>
           </div>
         </div>
-        <button onClick={() => setFailNext(!failNext)} className="mt-2 self-start text-xs text-ink-3">
-          демо: {failNext ? 'следующая операция будет отклонена ✓' : 'банк отклонит операцию'}
-        </button>
+        {s.demoMode && (
+          <button onClick={() => setFailNext(!failNext)} className="mt-2 self-start text-xs text-ink-3">
+            демо: {failNext ? 'следующая операция будет отклонена ✓' : 'банк отклонит операцию'}
+          </button>
+        )}
 
         <div className="mt-auto pb-6 pt-4">
           <Button disabled={!amount || !!error || !src} loading={busy} onClick={submit}>
@@ -279,9 +281,11 @@ export function OtherBanks() {
             <Button className="mt-4" loading={state === 'loading'} onClick={() => connect(false)}>
               Разрешить просмотр
             </Button>
-            <button onClick={() => connect(true)} className="mt-2 h-9 w-full text-xs text-ink-3">
-              демо: банк не отвечает
-            </button>
+            {s.demoMode && (
+              <button onClick={() => connect(true)} className="mt-2 h-9 w-full text-xs text-ink-3">
+                демо: банк не отвечает
+              </button>
+            )}
           </div>
         )}
       </Sheet>

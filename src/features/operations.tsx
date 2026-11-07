@@ -1,54 +1,29 @@
-import { ArrowDownLeft, ArrowUpRight, Coffee, Coins, Gift, Repeat, Sparkles, type LucideIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ReceiptView } from './trade'
 import { formatKzt, formatNum } from '../domain/money'
 import { selectCashbackStats, useBank, type Op } from '../store/useBank'
-import { List, ListRow, PageTitle, Sheet, TabPage } from '../ui/ui'
+import { Header, List, ListRow, Screen, Sheet } from '../ui/ui'
+import { OpDetail, opAmounts, opIcon } from './opView'
 
-type Filter = 'all' | 'gold' | 'cashback' | 'topup' | 'usdt'
-const FILTERS: { id: Filter; label: string }[] = [
-  { id: 'all', label: 'Все' },
-  { id: 'gold', label: 'Золото' },
-  { id: 'cashback', label: 'Кешбэк' },
-  { id: 'topup', label: 'Пополнения' },
-  { id: 'usdt', label: 'USDT' },
-]
+type Filter = 'all' | 'payments' | 'gold' | 'cashback' | 'topup' | 'usdt'
 
+/** Gold filter = every movement of gold grams: buys, sells, gold cashback, bonuses (review fix). */
 const match = (o: Op, f: Filter) =>
   f === 'all' ||
-  (f === 'gold' && (o.type === 'buy' || o.type === 'sell' || o.type === 'gift_out' || o.type === 'bonus') && o.asset !== 'usdt') ||
+  (f === 'payments' && o.type === 'purchase') ||
+  (f === 'gold' && o.asset !== 'usdt' && o.grams !== 0) ||
   (f === 'cashback' && o.type === 'cashback') ||
   (f === 'topup' && o.type === 'topup') ||
   (f === 'usdt' && o.asset === 'usdt')
 
-const ICON: Record<Op['type'], { icon: LucideIcon; tone: 'grey' | 'gold' | 'green' }> = {
-  topup: { icon: ArrowDownLeft, tone: 'green' },
-  buy: { icon: Coins, tone: 'gold' },
-  sell: { icon: ArrowUpRight, tone: 'grey' },
-  cashback: { icon: Sparkles, tone: 'gold' },
-  gift_out: { icon: Gift, tone: 'grey' },
-  bonus: { icon: Gift, tone: 'green' },
-  purchase: { icon: Coffee, tone: 'grey' },
-}
-
 const dayLabel = (t: number) => {
   const d = new Date(t)
-  const today = new Date()
-  const y = new Date(Date.now() - 86400000)
-  if (d.toDateString() === today.toDateString()) return 'Сегодня'
-  if (d.toDateString() === y.toDateString()) return 'Вчера'
+  if (d.toDateString() === new Date().toDateString()) return 'Сегодня'
+  if (d.toDateString() === new Date(Date.now() - 86400000).toDateString()) return 'Вчера'
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
 }
 
-const amount = (o: Op) => {
-  const parts: string[] = []
-  if (o.kzt) parts.push(`${o.kzt > 0 ? '+' : '−'}${formatKzt(Math.abs(o.kzt), 0)}`)
-  if (o.grams) parts.push(`${o.grams > 0 ? '+' : '−'}${o.asset === 'usdt' ? `${formatNum(Math.abs(o.grams), 2)} USDT` : `${formatNum(Math.abs(o.grams), 4)} г`}`)
-  return parts
-}
-
-/** «Операции» tab: month summary, filter chips, list grouped by day (DESIGN-SYSTEM §13). */
+/** «Операции» (inner page): month summary, filters, list by day, every row opens its details. */
 export function Operations() {
   const s = useBank()
   const history = s.history
@@ -60,10 +35,21 @@ export function Operations() {
   const inMonth = history.filter((o) => new Date(o.at).getMonth() === month)
   const spent = inMonth.filter((o) => o.type === 'purchase').reduce((a, o) => a - o.kzt, 0)
   const goldBought = inMonth.filter((o) => o.type === 'buy' && o.asset !== 'usdt').reduce((a, o) => a + o.grams, 0)
+  const hasUsdt = history.some((o) => o.asset === 'usdt')
+
+  const filters: { id: Filter; label: string }[] = [
+    { id: 'all', label: 'Все' },
+    { id: 'payments', label: 'Платежи' },
+    { id: 'gold', label: 'Золото' },
+    { id: 'cashback', label: 'Кешбэк' },
+    { id: 'topup', label: 'Пополнения' },
+    ...(hasUsdt ? [{ id: 'usdt' as const, label: 'USDT' }] : []),
+  ]
 
   const groups = useMemo(() => {
     const m = new Map<string, Op[]>()
-    for (const o of history.filter((x) => match(x, f))) {
+    // in «Все» the cashback lives inside its payment row, so it isn't listed twice
+    for (const o of history.filter((x) => match(x, f) && !(f === 'all' && x.parentId))) {
       const k = dayLabel(o.at)
       m.set(k, [...(m.get(k) ?? []), o])
     }
@@ -71,12 +57,12 @@ export function Operations() {
   }, [history, f])
 
   return (
-    <TabPage>
-      <PageTitle>Операции</PageTitle>
-      <div className="px-4">
+    <Screen>
+      <Header title="Операции" />
+      <div className="px-4 pb-8">
         <div className="grid grid-cols-3 gap-2">
           {[
-            { k: 'Покупки картой', v: formatKzt(spent, 0) },
+            { k: 'Платежи', v: formatKzt(spent, 0) },
             { k: 'Куплено золота', v: `${formatNum(goldBought, 4)} г` },
             { k: 'Кешбэк', v: `+${formatKzt(cbStats.monthTotalKzt, 0)}`, sub: cbStats.monthGrams ? `${formatNum(cbStats.monthGrams, 4)} г золотом` : undefined },
           ].map((x) => (
@@ -90,12 +76,8 @@ export function Operations() {
         <div className="mt-1 text-xs text-ink-3">За этот месяц</div>
 
         <div className="no-scrollbar -mx-4 mt-4 flex gap-2 overflow-x-auto px-4">
-          {FILTERS.map((x) => (
-            <button
-              key={x.id}
-              onClick={() => setF(x.id)}
-              className={`h-9 shrink-0 rounded-full px-4 text-sm font-medium ${f === x.id ? 'bg-ink text-white' : 'bg-surface text-ink'}`}
-            >
+          {filters.map((x) => (
+            <button key={x.id} onClick={() => setF(x.id)} className={`h-9 shrink-0 rounded-full px-4 text-sm font-medium ${f === x.id ? 'bg-ink text-white' : 'bg-surface text-ink'}`}>
               {x.label}
             </button>
           ))}
@@ -104,21 +86,21 @@ export function Operations() {
         {groups.length === 0 && <div className="mt-8 text-center text-sm text-ink-2">Операций этого типа пока нет</div>}
         {groups.map(([day, ops]) => (
           <div key={day}>
-            <div className="px-1 pb-2 pt-5 text-sm font-semibold text-ink-2">{day}</div>
+            <div className="px-1 pb-1 pt-5 text-sm font-semibold text-ink-2">{day}</div>
             <List>
               {ops.map((o) => {
-                const [a, b] = amount(o)
-                const ic = ICON[o.type]
+                const [a, b] = opAmounts(o)
+                const ic = opIcon(o)
                 return (
                   <ListRow
                     key={o.id}
-                    icon={o.asset === 'usdt' ? Repeat : ic.icon}
+                    icon={ic.icon}
                     tone={ic.tone}
-                    title={o.title}
+                    title={o.type === 'purchase' ? o.title.split(' · ')[0] : o.title}
                     sub={new Date(o.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                     value={a}
                     valueSub={b}
-                    onClick={o.receipt ? () => setOpen(o) : undefined}
+                    onClick={() => setOpen(o)}
                   />
                 )
               })}
@@ -127,16 +109,8 @@ export function Operations() {
         ))}
       </div>
       <Sheet open={!!open} onClose={() => setOpen(null)}>
-        {open?.receipt && (
-          <div>
-            <div className="text-[19px] font-bold">{open.title}</div>
-            <div className="text-xs text-ink-2">{new Date(open.at).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</div>
-            <div className="mt-3 rounded-2xl bg-surface px-4 py-2">
-              <ReceiptView r={open.receipt} onTerm={() => setOpen(null)} />
-            </div>
-          </div>
-        )}
+        {open && <OpDetail op={open} onClose={() => setOpen(null)} />}
       </Sheet>
-    </TabPage>
+    </Screen>
   )
 }

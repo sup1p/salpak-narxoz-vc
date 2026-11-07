@@ -12,9 +12,9 @@ describe('bank store', () => {
     const r = quoteBuy(10000, M, 0)
     expect(s().confirm(r, 1)).toBeNull()
     expect(s().cardKzt).toBe(40000)
-    expect(s().gold).toBeCloseTo(0.0124 + 0.1807, 6)
+    expect(s().gold).toBeCloseTo(0.181, 6)
     expect(s().history[0].type).toBe('buy')
-    expect(s().avgPrice).toBeGreaterThan(53900)
+    expect(s().avgPrice).toBe(55074)
   })
   it('rejects duplicate confirmation of the same quote', () => {
     const r = quoteBuy(10000, M, 0)
@@ -40,11 +40,19 @@ describe('bank store', () => {
     expect(s().sandbox.cardKzt).toBe(40000)
     expect(s().history.some((o) => o.type === 'buy')).toBe(false)
   })
-  it('pays gold cashback on card spend', () => {
+  it('pays gold cashback on card spend and links it to the payment', () => {
     s().setCashbackMode('gold')
-    const { grams } = s().payCard(1500)
+    const { grams } = s().payCard(1500, 'Кофе', 'qr')
     expect(grams).toBeCloseTo(0.000274, 6)
     expect(s().cardKzt).toBe(48500)
+    const [cb, pay] = s().history
+    expect(cb.parentId).toBe(pay.id)
+    expect(pay.cbGrams).toBeCloseTo(0.000274, 6)
+  })
+  it('sandbox mirrors the real card instead of a separate 50 000', () => {
+    s().topUp(5000)
+    s().setSandbox(true)
+    expect(s().sandbox.cardKzt).toBe(55000)
   })
   it('pays tenge cashback on card spend', () => {
     s().payCard(1500)
@@ -70,28 +78,26 @@ describe('system completion', () => {
     expect(s().events.some((e) => e.name === 'sandbox_to_real')).toBe(true)
   })
   it('pays the referral bonus only after the friend buys, once', () => {
-    s().confirm(quoteBuy(10000, M, 0), 1)
-    s().sendGift(0.01, 'Данияр')
-    const g = s().gold
+    s().sendGift(0.005, 'Данияр')
+    expect(s().gold).toBe(0) // the gift is paid by the bank
     s().simulateFriendPurchase('Данияр')
     s().simulateFriendPurchase('Данияр')
-    expect(s().gold).toBeCloseTo(g + 0.05, 6)
+    expect(s().gold).toBeCloseTo(0.005, 6)
     expect(s().invites[0].status).toBe('bought')
   })
-  it('unlocks levels automatically', async () => {
-    const { selectLevel } = await import('./useBank')
-    expect(selectLevel(s())).toBe('start')
-    s().confirm(quoteBuy(10000, M, 0), 1)
-    s().completeLesson('spread')
-    s().completeLesson('custody')
-    expect(selectLevel(s())).toBe('saver')
+  it('opens USDT and partners only after the risk test, not after lessons', async () => {
+    const { selectInvestorAccess } = await import('./useBank')
+    for (const id of ['token', 'spread', 'custody', 'risk', 'tax', 'aifc', 'safety']) s().completeLesson(id)
+    expect(selectInvestorAccess(s())).toBe(false)
+    s().passRiskTest()
+    expect(selectInvestorAccess(s())).toBe(true)
   })
   it('buys and sells USDT on the card', () => {
     expect(s().confirm(quoteBuy(10000, 520, 0, 'usdt'), 1)).toBeNull()
-    expect(s().usdt).toBe(19.04)
+    expect(s().usdt).toBe(19.08)
     expect(s().cardKzt).toBe(40000)
     expect(s().confirm(quoteSell(10, 520, 0, 'usdt'), 1)).toBeNull()
-    expect(s().usdt).toBe(9.04)
+    expect(s().usdt).toBe(9.08)
   })
   it('counts top-ups toward the regularity streak', async () => {
     const { selectRegular } = await import('./useBank')

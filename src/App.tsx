@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { Bell, Grid2x2, Home as HomeIcon, List, MoreHorizontal } from 'lucide-react'
+import { Bell, Grid2x2, Home as HomeIcon, MoreHorizontal, Receipt } from 'lucide-react'
 import { useBank } from './store/useBank'
 import { Login } from './features/onboarding'
 import { Home } from './features/home'
@@ -8,21 +8,22 @@ import { Gold } from './features/gold'
 import { TradeFlow } from './features/trade'
 import { Cashback } from './features/cashback'
 import { Academy, LessonScreen } from './features/academy'
-import { TaxReadiness, InviteGift, GiftReceived, PartnerConnect, Levels } from './features/profile'
+import { TaxReadiness, InviteGift, GiftReceived, PartnerConnect } from './features/profile'
+import { RiskTest } from './features/riskTest'
 import { Metrics } from './features/metrics'
 import { Operations } from './features/operations'
 import { Services } from './features/services'
 import { Messages, useUnreadCount } from './features/messages'
-import { More, Security, Documents } from './features/more'
+import { More, Security, Documents, Support } from './features/more'
 import { Tour } from './features/tour'
 import { OtherBanks, TopUp } from './features/banks'
 import { PayRoute, Payments } from './features/payments'
 import { Scan } from './features/scan'
 
-/** Bottom bar like Freedom SuperApp (DESIGN-SYSTEM §13): 5 labelled tabs, no centre button. */
+/** Bottom bar (DESIGN-SYSTEM §14.2): Главная · Платежи · Сервисы · Сообщения · Ещё — like Kaspi/Freedom. */
 export const TABS = [
   { to: '/home', icon: HomeIcon, label: 'Главная' },
-  { to: '/operations', icon: List, label: 'Операции' },
+  { to: '/payments', icon: Receipt, label: 'Платежи' },
   { to: '/services', icon: Grid2x2, label: 'Сервисы' },
   { to: '/messages', icon: Bell, label: 'Сообщения' },
   { to: '/more', icon: MoreHorizontal, label: 'Ещё' },
@@ -106,7 +107,9 @@ function Shell() {
             <Route path="/tax" element={<Guard><TaxReadiness /></Guard>} />
             <Route path="/invite" element={<Guard><InviteGift /></Guard>} />
             <Route path="/partner" element={<Guard><PartnerConnect /></Guard>} />
-            <Route path="/levels" element={<Guard><Levels /></Guard>} />
+            <Route path="/risk-test" element={<Guard><RiskTest /></Guard>} />
+            <Route path="/support" element={<Guard><Support /></Guard>} />
+            <Route path="/levels" element={<Navigate to="/risk-test" replace />} />
             <Route path="/metrics" element={<Guard><Metrics /></Guard>} />
             <Route path="/security" element={<Guard><Security /></Guard>} />
             <Route path="/documents" element={<Guard><Documents /></Guard>} />

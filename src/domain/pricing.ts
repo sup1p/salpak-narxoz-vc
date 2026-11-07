@@ -4,7 +4,8 @@ export const QUOTE_TTL_MS = 30_000
 export const MIN_BUY = 1000
 export const SPREAD = 0.005
 export const FEE_RATE = 0.003
-export const MIN_FEE = 50
+/** No minimum fee (review 2026-11-07): a 1 000 ₸ buy costs ≈0.8% over market, not ≈5.5%. */
+export const MIN_FEE = 0
 
 export type Side = 'buy' | 'sell'
 /** gold: units are grams (4 decimals); usdt: units are USDT (2 decimals). */
@@ -46,6 +47,9 @@ export function quoteSell(units: number, market: number, now: number, asset: Ass
   const fee = feeFor(gross)
   return { side: 'sell', asset, market, price, fee, grams: units, amountKzt: gross, totalKzt: round(gross - fee, 1), quoteId: newId(), expiresAt: now + QUOTE_TTL_MS }
 }
+
+/** Effective cost over market as a share of the amount (spread + fee), e.g. 0.008 = 0.8%. */
+export const overMarketPct = (r: Receipt) => (r.side === 'buy' ? (r.amountKzt - r.grams * r.market) / r.amountKzt : (r.grams * r.market - r.totalKzt) / (r.grams * r.market))
 
 /** How much above the market the user paid on a buy (for the academy quiz). */
 export const overpayKzt = (r: Receipt) => round(r.amountKzt - r.grams * r.market, 0)

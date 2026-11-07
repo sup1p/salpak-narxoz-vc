@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { BAR, RISK_FACTS, USDT_KZT } from '../data/seed'
 import { formatGrams, formatKzt, formatNum, parseAmount } from '../domain/money'
-import { MIN_BUY, quoteBuy, quoteSell, type Asset, type Receipt, type Side } from '../domain/pricing'
-import { portfolioKzt, STATUS_LABEL, statusFor } from '../domain/loyalty'
-import { selectRegular, selectStatus, useBank, type OpError } from '../store/useBank'
+import { MIN_BUY, overMarketPct, quoteBuy, quoteSell, type Asset, type Receipt, type Side } from '../domain/pricing'
+import { STATUS_LABEL, statusFor, statusPortfolioKzt } from '../domain/loyalty'
+import { selectInvestorAccess, selectRegular, selectStatus, useBank, type OpError } from '../store/useBank'
 import { GoldCapsule, Sticker, TimerRing } from '../ui/gold'
 import { Button, Card, Header, Row, Screen, Sheet } from '../ui/ui'
 
@@ -24,7 +24,7 @@ export function ReceiptView({ r, onTerm }: { r: Receipt; onTerm: (id: string) =>
     <div>
       <Row label="Рыночная цена" value={`${formatNum(r.market, d)} ${per(r.asset)}`} />
       <Row label={buy ? 'Спред +0,5%' : 'Спред −0,5%'} onLabel={() => onTerm('spread')} value={`${formatNum(r.price, d)} ${per(r.asset)}`} />
-      <Row label="Комиссия 0,3% (мин. 50 ₸)" onLabel={() => onTerm('spread')} value={formatKzt(r.fee)} />
+      <Row label="Комиссия 0,3%" onLabel={() => onTerm('spread')} value={formatKzt(r.fee)} />
       <div className="my-1 h-px bg-line" />
       {buy ? (
         <>
@@ -64,6 +64,11 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
   const [pulse, setPulse] = useState(0)
 
   useEffect(() => {
+    // USDT needs the risk test first (review 2026-11-07)
+    if (!isGold && !selectInvestorAccess(useBank.getState())) {
+      nav(`/risk-test?next=${buy ? '/otc' : '/otc/sell'}`, { replace: true })
+      return
+    }
     if (params.get('try') === '1' && buy && isGold) s.setSandbox(true)
     return () => useBank.getState().setSandbox(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,7 +156,7 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
 
   // US-13.3: warn when a sale would drop the loyalty status (it is kept until month end)
   const statusNow = selectStatus(s)
-  const statusAfter = !buy && isGold && r ? statusFor(portfolioKzt({ ...s, gold: s.gold - r.grams, cardKzt: s.cardKzt + r.totalKzt }, s.market, USDT_KZT), selectRegular(s)) : statusNow
+  const statusAfter = !buy && isGold && r ? statusFor(statusPortfolioKzt({ ...s, gold: s.gold - r.grams, cardKzt: s.cardKzt + r.totalKzt }, USDT_KZT), selectRegular(s)) : statusNow
   const statusDrops = statusAfter !== statusNow
   const what = isGold ? 'золото' : 'USDT'
 
@@ -170,33 +175,46 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
 
       {step === 'input' && (
         <div className="flex flex-1 flex-col px-5">
-          {sandbox && <p className="mb-3 rounded-2xl bg-mint p-3 text-sm">Режим Пробы: виртуальные {formatKzt(s.sandbox.cardKzt, 0)}. Реальные балансы не меняются.</p>}
+          {sandbox && <p className="mb-3 rounded-2xl bg-mint p-3 text-sm">Режим Пробы: покупаем понарошку — деньги с карты не спишутся.</p>}
           <div className="text-sm text-ink-2">{buy ? 'Сумма в тенге' : isGold ? 'Сколько граммов продать' : 'Сколько USDT продать'}</div>
           <div className="mt-2 flex items-baseline gap-2">
             <input
               autoFocus
               inputMode="decimal"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={buy ? '10 000' : isGold ? '0,1' : '10'}
+              onChange={(e) => {
+                // tenge amounts are shown with spaces as you type: 5000 → 5 000
+                if (!buy) return setInput(e.target.value)
+                const d = e.target.value.replace(/\D/g, '').slice(0, 9)
+                setInput(d ? Number(d).toLocaleString('ru-RU').replace(/\u00a0|\u202f/g, ' ') : '')
+              }}
+              placeholder="0"
               className="num w-full bg-transparent text-[52px] font-bold outline-none placeholder:text-ink-3"
             />
             <span className="text-3xl font-bold text-ink-3">{buy ? '₸' : isGold ? 'г' : 'USDT'}</span>
           </div>
-          <div className="num text-sm text-ink-2">
-            {preview && !inputError ? (buy ? `≈ ${fu(asset, preview.grams)}` : `≈ ${formatKzt(preview.totalKzt)} на карту`) : buy ? `Доступно ${formatKzt(card, 0)}` : `Доступно ${fu(asset, gold)}`}
+          {/* fixed-height helper area: errors never push the chips down (review fix) */}
+          <div className="num min-h-[44px] text-sm">
+            <div className="text-ink-2">{buy ? `Доступно ${formatKzt(card, 0)}` : `Доступно ${fu(asset, gold)}`}</div>
+            {inputError ? (
+              <div className="font-medium text-err">{inputError}</div>
+            ) : preview ? (
+              <div className="font-medium text-ink">
+                {buy ? `≈ ${fu(asset, preview.grams)}` : `≈ ${formatKzt(preview.totalKzt)} на карту`}
+                <span className="font-normal text-ink-2"> · сверх рынка ≈ {formatNum(overMarketPct(preview) * 100, 1)}%</span>
+              </div>
+            ) : null}
           </div>
-          {inputError && <div className="mt-2 text-sm font-medium text-err">{inputError}</div>}
           <div className="mt-5 flex gap-2">
             {presets.map((p, i) => (
-              <button key={i} onClick={() => setInput(String(p).replace('.', ','))} className="num h-10 flex-1 rounded-[2px] text-sm font-semibold ring-1 ring-inset ring-line active:ring-ink">
+              <button key={i} onClick={() => setInput(buy ? formatNum(p) : String(p).replace('.', ','))} className="num h-10 flex-1 rounded-full bg-surface text-sm font-semibold active:bg-line">
                 {buy ? formatNum(p) : ['25%', '50%', 'Всё'][i]}
               </button>
             ))}
           </div>
           {inputError?.startsWith('Не хватает') && (
-            <button onClick={() => { s.topUp(50000) }} className="mt-3 h-10 rounded-[2px] text-sm font-semibold ring-1 ring-inset ring-ink">
-              Пополнить на 50 000 ₸ (тест)
+            <button onClick={() => nav('/topup')} className="mt-3 h-10 rounded-xl bg-surface text-sm font-semibold">
+              Пополнить карту
             </button>
           )}
           <div className="mt-auto pb-6 pt-6">
@@ -229,9 +247,11 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
               После продажи статус станет «{STATUS_LABEL[statusAfter]}». Текущий «{STATUS_LABEL[statusNow]}» сохранится до конца месяца.
             </div>
           )}
-          <button onClick={() => setR({ ...r, expiresAt: Date.now() })} className="mt-3 inline-flex h-9 items-center gap-1 self-start rounded-full px-3 text-xs text-ink-3 active:bg-surface">
-            <FastForward size={14} /> демо: ускорить таймер
-          </button>
+          {s.demoMode && (
+            <button onClick={() => setR({ ...r, expiresAt: Date.now() })} className="mt-3 inline-flex h-9 items-center gap-1 self-start rounded-full px-3 text-xs text-ink-3 active:bg-surface">
+              <FastForward size={14} /> демо: ускорить таймер
+            </button>
+          )}
           <div className="mt-auto pb-6 pt-4">
             <Button variant="gold" onClick={() => setPinOpen(true)}>
               Подтвердить
@@ -362,11 +382,14 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
             onClick={() => {
               s.markFactsSeen()
               setFactsOpen(false)
-              const t = Date.now()
-              setNow(t)
-              setR(quoteBuy(amount, market, t, asset))
-              setStep('quote')
-              s.track('receipt_opened', t)
+              // start the 30 s quote only after the sheet has closed (review fix)
+              setTimeout(() => {
+                const t = Date.now()
+                setNow(t)
+                setR(quoteBuy(amount, market, t, asset))
+                setStep('quote')
+                s.track('receipt_opened', t)
+              }, 320)
             }}
           >
             Понятно, купить
