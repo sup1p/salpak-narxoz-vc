@@ -1,52 +1,88 @@
-import { BookOpen, Coins, Landmark, FileText, Gift, Hand, Repeat, Sparkles, Unlock, type LucideIcon } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
+import { BookOpen, FileText, Hand, Landmark, ShieldCheck, type LucideIcon } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { formatKzt, formatNum } from '../domain/money'
-import { selectLevel, useBank, type BankState } from '../store/useBank'
-import { PageTitle, TabPage } from '../ui/ui'
+import { useBank, type BankState, type Op } from '../store/useBank'
+import { Button, PageTitle, Sheet, TabPage } from '../ui/ui'
+import { OpDetail, opAmounts, opIcon } from './opView'
+
+/**
+ * «Сообщения» (US-16.1): every money movement + service messages, split into topics.
+ * Tapping a message opens the message itself (a sheet), never another section.
+ */
+type Topic = 'all' | 'payments' | 'topups' | 'cashback' | 'gold' | 'bank'
+const TOPICS: { id: Topic; label: string }[] = [
+  { id: 'all', label: 'Все' },
+  { id: 'payments', label: 'Платежи' },
+  { id: 'topups', label: 'Пополнения' },
+  { id: 'cashback', label: 'Кешбэк' },
+  { id: 'gold', label: 'Золото и USDT' },
+  { id: 'bank', label: 'От банка' },
+]
 
 interface Msg {
   id: string
   at: number
+  topic: Exclude<Topic, 'all'>
   icon: LucideIcon
   tone: 'grey' | 'gold' | 'green'
   title: string
   text: string
-  to?: string
+  amount?: string
+  op?: Op
+  action?: { label: string; to: string }
 }
 
 const DAY = 86400000
 
-/** Inbox built from real state (DESIGN-SYSTEM §13 «Сообщения»). */
+const opTopic = (o: Op): Msg['topic'] =>
+  o.type === 'purchase' ? 'payments' : o.type === 'topup' ? 'topups' : o.type === 'cashback' || o.type === 'bonus' ? 'cashback' : 'gold'
+
+const opText = (o: Op) => {
+  const [, second] = opAmounts(o)
+  if (o.type === 'purchase') return `${o.title.split(' · ')[1] ?? o.title}${second ? ` · ${second}` : ''}`
+  if (o.type === 'topup') return 'Зачислено на карту GRAM'
+  if (o.type === 'cashback') return o.asset === 'gold' ? 'Начислено золотом за покупку картой' : 'Вернули на карту за покупку'
+  if (o.type === 'bonus') return o.title.replace('Бонус: ', '')
+  if (o.receipt) return `По цене ${o.receipt.price.toLocaleString('ru-RU')} ₸ · внутри Рентген цены`
+  return ''
+}
+
 export function buildMessages(s: BankState): Msg[] {
-  const out: Msg[] = [
-    { id: 'welcome', at: s.installedAt, icon: Hand, tone: 'grey', title: 'Добро пожаловать в GRAM', text: 'Мы положили 50 000 ₸ тестовых денег. Начни с покупки золота в режиме Пробы — без риска.', to: '/buy?try=1' },
-  ]
-  for (const o of s.history) {
-    if (o.id === 'seed-cb') continue
-    if (o.type === 'buy' && o.asset === 'gold')
-      out.push({ id: o.id, at: o.at, icon: Coins, tone: 'gold', title: 'Покупка золота', text: `+${formatNum(o.grams, 4)} г за ${formatKzt(-o.kzt, 0)}. Чек с разбором цены — в операциях.`, to: '/operations' })
-    if (o.type === 'sell' && o.asset === 'gold')
-      out.push({ id: o.id, at: o.at, icon: Coins, tone: 'gold', title: 'Продажа золота', text: `−${formatNum(-o.grams, 4)} г, на карту ${formatKzt(o.kzt, 0)}.`, to: '/operations' })
-    if (o.asset === 'usdt')
-      out.push({ id: o.id, at: o.at, icon: Repeat, tone: 'grey', title: o.type === 'buy' ? 'Покупка USDT' : 'Продажа USDT', text: `${formatNum(Math.abs(o.grams), 2)} USDT · ${formatKzt(Math.abs(o.kzt), 0)}`, to: '/operations' })
-    if (o.type === 'cashback' && o.asset === 'gold')
-      out.push({ id: o.id, at: o.at, icon: Sparkles, tone: 'gold', title: 'Кешбэк золотом', text: `+${formatNum(o.grams, 4)} г за покупку картой.`, to: '/cashback' })
-    if (o.type === 'bonus') out.push({ id: o.id, at: o.at, icon: Gift, tone: 'green', title: 'Бонус за друга', text: `${o.title.replace('Бонус: ', '')}. Тебе +0,05 г золота.`, to: '/invite' })
-  }
+  const out: Msg[] = s.history.map((o) => {
+    const { icon, tone } = opIcon(o)
+    return {
+      id: o.id,
+      at: o.at,
+      topic: opTopic(o),
+      icon,
+      tone,
+      title: o.type === 'purchase' ? o.title.split(' · ')[0] : o.title,
+      text: opText(o),
+      amount: opAmounts(o)[0],
+      op: o,
+    }
+  })
+  out.push({
+    id: 'welcome',
+    at: s.installedAt,
+    topic: 'bank',
+    icon: Hand,
+    tone: 'grey',
+    title: 'Добро пожаловать в GRAM',
+    text: 'На карте 50 000 ₸ тестовых денег. Первую покупку золота можно сделать понарошку — в режиме Пробы.',
+    action: { label: 'Купить золото', to: '/buy?try=1' },
+  })
   for (const b of s.bankLinks)
-    out.push({ id: b.id, at: b.connectedAt, icon: Landmark, tone: 'grey', title: `Подключён счёт: ${b.bank}`, text: 'Баланс виден в общей сумме. Только просмотр — отозвать можно в любой момент.', to: '/banks' })
-  const level = selectLevel(s)
-  const lastLesson = [...s.events].reverse().find((e) => e.name === 'lesson_done')
-  if (level !== 'start' && lastLesson)
-    out.push({ id: 'level', at: lastLesson.at, icon: Unlock, tone: 'green', title: `Открыт уровень «${level === 'saver' ? 'Копилка' : 'Инвестор'}»`, text: level === 'saver' ? 'Теперь доступны цели в граммах.' : 'Теперь доступны партнёры МФЦА и обмен ₸ ↔ USDT.', to: '/levels' })
+    out.push({ id: b.id, at: b.connectedAt, topic: 'bank', icon: Landmark, tone: 'grey', title: `Подключён счёт: ${b.bank}`, text: 'Баланс виден в общей сумме. Только просмотр — отозвать можно в любой момент.', action: { label: 'Счета других банков', to: '/banks' } })
+  const risk = s.events.find((e) => e.name === 'risk_test_passed')
+  if (risk) out.push({ id: 'risk', at: risk.at, topic: 'bank', icon: ShieldCheck, tone: 'green', title: 'Тест на понимание рисков пройден', text: 'Обмен ₸ ↔ USDT и партнёры МФЦА доступны.' })
   const firstBuy = s.events.find((e) => e.name === 'first_purchase')
   if (firstBuy && !s.lessonsDone.includes('spread'))
-    out.push({ id: 'tip-spread', at: firstBuy.at + 1000, icon: BookOpen, tone: 'grey', title: 'Сколько ты заплатил(а) сверх рынка?', text: 'Урок на 2 минуты по твоему чеку.', to: '/academy/spread' })
+    out.push({ id: 'tip-spread', at: firstBuy.at + 1000, topic: 'bank', icon: BookOpen, tone: 'grey', title: 'Сколько ты заплатил(а) сверх рынка?', text: 'Урок на 2 минуты по твоему чеку.', action: { label: 'Открыть урок', to: '/academy/spread' } })
   if (s.gold > 0 && firstBuy) {
     const now = new Date()
     const deadline = new Date(now.getFullYear() + (now.getMonth() > 8 || (now.getMonth() === 8 && now.getDate() > 15) ? 1 : 0), 8, 15)
-    out.push({ id: 'tax', at: firstBuy.at + 2000, icon: FileText, tone: 'grey', title: 'Декларация — подготовим за тебя', text: `Золото — актив. До 15 сентября ${Math.ceil((deadline.getTime() - now.getTime()) / DAY)} дн. Данные уже собираем.`, to: '/tax' })
+    out.push({ id: 'tax', at: firstBuy.at + 2000, topic: 'bank', icon: FileText, tone: 'grey', title: 'Декларация — подготовим за тебя', text: `Золото — актив, его нужно отразить в декларации до 15 сентября (через ${Math.ceil((deadline.getTime() - now.getTime()) / DAY)} дн.). Данные уже собираем.`, action: { label: 'Налоги и декларация', to: '/tax' } })
   }
   return out.sort((a, b) => b.at - a.at)
 }
@@ -58,44 +94,94 @@ export function useUnreadCount() {
 
 const when = (t: number) => {
   const d = new Date(t)
-  const today = new Date()
-  const same = d.toDateString() === today.toDateString()
+  const same = d.toDateString() === new Date().toDateString()
   return same ? d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
 }
 
 export function Messages() {
   const nav = useNavigate()
   const s = useBank()
-  const msgs = useMemo(() => buildMessages(s), [s])
+  const [topic, setTopic] = useState<Topic>('all')
+  const [open, setOpen] = useState<Msg | null>(null)
+  const all = useMemo(() => buildMessages(s), [s])
+  const msgs = topic === 'all' ? all : all.filter((m) => m.topic === topic)
   const readAt = useMemo(() => s.messagesReadAt, []) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    const t = setTimeout(() => useBank.getState().markMessagesRead(), 600)
+    const t = setTimeout(() => useBank.getState().markMessagesRead(), 800)
     return () => clearTimeout(t)
   }, [])
   const tones = { grey: 'bg-white text-ink', gold: 'bg-gold-soft text-[#7A4A00]', green: 'bg-mint text-[#00663F]' }
+  const count = (t: Topic) => (t === 'all' ? all.length : all.filter((m) => m.topic === t).length)
 
   return (
     <TabPage>
       <PageTitle>Сообщения</PageTitle>
+      <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-3">
+        {TOPICS.map((t) => (
+          <button key={t.id} onClick={() => setTopic(t.id)} className={`h-9 shrink-0 rounded-full px-4 text-sm font-medium ${topic === t.id ? 'bg-ink text-white' : 'bg-surface text-ink'}`}>
+            {t.label} <span className={topic === t.id ? 'text-white/60' : 'text-ink-3'}>{count(t.id)}</span>
+          </button>
+        ))}
+      </div>
       <div className="space-y-2 px-4">
+        {msgs.length === 0 && <div className="py-10 text-center text-sm text-ink-2">Здесь пока пусто</div>}
         {msgs.map((m) => (
-          <button key={m.id} onClick={() => m.to && nav(m.to)} className="flex w-full gap-3 rounded-2xl bg-surface p-4 text-left">
-            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${tones[m.tone]} ${m.tone === 'grey' ? '!bg-white' : ''}`}>
+          <button key={m.id} onClick={() => setOpen(m)} className="flex w-full items-start gap-3 rounded-2xl bg-surface p-4 text-left active:opacity-80">
+            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${tones[m.tone]}`}>
               <m.icon size={20} strokeWidth={1.8} />
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-2">
                 <div className="truncate text-[15px] font-semibold">{m.title}</div>
-                <div className="flex shrink-0 items-center gap-1.5 text-xs text-ink-3">
+                {m.amount && <div className={`num shrink-0 text-[15px] font-semibold ${m.amount.startsWith('+') ? 'text-[#00663F]' : ''}`}>{m.amount}</div>}
+              </div>
+              <div className="mt-0.5 flex items-baseline justify-between gap-2">
+                <p className="line-clamp-2 text-[13px] leading-snug text-ink-2">{m.text}</p>
+                <span className="flex shrink-0 items-center gap-1.5 text-xs text-ink-3">
                   {m.at > readAt && <span className="h-2 w-2 rounded-full bg-err" aria-label="Новое" />}
                   {when(m.at)}
-                </div>
+                </span>
               </div>
-              <p className="mt-0.5 text-sm leading-snug text-ink-2">{m.text}</p>
             </div>
           </button>
         ))}
       </div>
+
+      <Sheet open={!!open} onClose={() => setOpen(null)}>
+        {open?.op ? (
+          <OpDetail op={open.op} onClose={() => setOpen(null)} />
+        ) : (
+          open && (
+            <div>
+              <div className="flex items-center gap-3">
+                <span className={`grid h-12 w-12 place-items-center rounded-full ${tones[open.tone]} ${open.tone === 'grey' ? '!bg-surface' : ''}`}>
+                  <open.icon size={22} strokeWidth={1.8} />
+                </span>
+                <div>
+                  <div className="text-xs text-ink-2">От банка · {when(open.at)}</div>
+                  <div className="text-[17px] font-bold leading-tight">{open.title}</div>
+                </div>
+              </div>
+              <p className="mt-4 rounded-2xl bg-surface p-4 text-[15px] leading-snug">{open.text}</p>
+              <div className="mt-4 grid gap-2">
+                {open.action && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      const to = open.action!.to
+                      setOpen(null)
+                      nav(to)
+                    }}
+                  >
+                    {open.action.label}
+                  </Button>
+                )}
+                <Button onClick={() => setOpen(null)}>Закрыть</Button>
+              </div>
+            </div>
+          )
+        )}
+      </Sheet>
     </TabPage>
   )
 }
