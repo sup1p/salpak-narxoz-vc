@@ -15,6 +15,7 @@ import { Services } from './features/services'
 import { Messages, useUnreadCount } from './features/messages'
 import { More, Security, Documents } from './features/more'
 import { Tour } from './features/tour'
+import { OtherBanks, TopUp } from './features/banks'
 
 /** Bottom bar like Freedom SuperApp (DESIGN-SYSTEM §13): 5 labelled tabs, no centre button. */
 export const TABS = [
@@ -107,6 +108,8 @@ function Shell() {
             <Route path="/metrics" element={<Guard><Metrics /></Guard>} />
             <Route path="/security" element={<Guard><Security /></Guard>} />
             <Route path="/documents" element={<Guard><Documents /></Guard>} />
+            <Route path="/topup" element={<Guard><TopUp /></Guard>} />
+            <Route path="/banks" element={<Guard><OtherBanks /></Guard>} />
             {/* old paths */}
             <Route path="/profile" element={<Navigate to="/more" replace />} />
             <Route path="/history" element={<Navigate to="/operations" replace />} />

@@ -1,4 +1,4 @@
-import { BookOpen, Coins, FileText, Gift, Hand, Repeat, Sparkles, Unlock, type LucideIcon } from 'lucide-react'
+import { BookOpen, Coins, Landmark, FileText, Gift, Hand, Repeat, Sparkles, Unlock, type LucideIcon } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { formatKzt, formatNum } from '../domain/money'
@@ -34,6 +34,8 @@ export function buildMessages(s: BankState): Msg[] {
       out.push({ id: o.id, at: o.at, icon: Sparkles, tone: 'gold', title: 'Кешбэк золотом', text: `+${formatNum(o.grams, 4)} г за покупку картой.`, to: '/cashback' })
     if (o.type === 'bonus') out.push({ id: o.id, at: o.at, icon: Gift, tone: 'green', title: 'Бонус за друга', text: `${o.title.replace('Бонус: ', '')}. Тебе +0,05 г золота.`, to: '/invite' })
   }
+  for (const b of s.bankLinks)
+    out.push({ id: b.id, at: b.connectedAt, icon: Landmark, tone: 'grey', title: `Подключён счёт: ${b.bank}`, text: 'Баланс виден в общей сумме. Только просмотр — отозвать можно в любой момент.', to: '/banks' })
   const level = selectLevel(s)
   const lastLesson = [...s.events].reverse().find((e) => e.name === 'lesson_done')
   if (level !== 'start' && lastLesson)

@@ -1,10 +1,10 @@
-import { ArrowDownLeft, ArrowRight, Bell, BookOpen, ChevronRight, Coffee, Coins, CreditCard, FileText, Gift, PiggyBank, Plus, Repeat, Sparkles, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowRight, Landmark, Bell, BookOpen, ChevronRight, Coffee, Coins, CreditCard, FileText, Gift, PiggyBank, Plus, Repeat, Sparkles, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PARTNER, USDT_KZT } from '../data/seed'
 import { nextStatusGap, STATUS_LABEL } from '../domain/loyalty'
 import { formatGrams, formatKzt, formatNum } from '../domain/money'
-import { hasRealBuy, selectPortfolio, selectRegular, selectStatus, useBank } from '../store/useBank'
+import { hasRealBuy, selectOtherBanksKzt, selectPortfolio, selectRegular, selectStatus, useBank } from '../store/useBank'
 import { GoldCapsule, MiningRain } from '../ui/gold'
 import { Badge, Balance, List, ListRow, Logo, SectionTitle, TabPage, Toast } from '../ui/ui'
 import { useUnreadCount } from './messages'
@@ -30,7 +30,8 @@ export function Home() {
   const regular = selectRegular(s)
   const gap = nextStatusGap(portfolio, regular)
   const partnerKzt = s.partnerConnected ? PARTNER.usdt * USDT_KZT : 0
-  const total = portfolio + partnerKzt
+  const otherBanks = selectOtherBanksKzt(s)
+  const total = portfolio + partnerKzt + otherBanks
   const bought = hasRealBuy(s)
   const buyTo = bought ? '/buy' : '/buy?try=1'
   const [toast, setToast] = useState('')
@@ -97,7 +98,7 @@ export function Home() {
         </div>
 
         <div data-tour="actions" className="mt-5 grid grid-cols-3">
-          <Action icon={ArrowDownLeft} label="Пополнить" onClick={() => { s.topUp(10000); flash('Пополнение +10 000 ₸ (тест)', 1800) }} />
+          <Action icon={ArrowDownLeft} label="Пополнить" onClick={() => nav('/topup')} />
           <Action icon={Coffee} label="Оплатить" onClick={pay} />
           <Action icon={Plus} label="Купить золото" gold onClick={() => nav(buyTo)} />
         </div>
@@ -152,8 +153,16 @@ export function Home() {
           <ListRow icon={CreditCard} title="Карта GRAM" sub="•• 2026" value={formatKzt(s.cardKzt, 0)} />
           <ListRow icon={PiggyBank} title="Сбережения" sub="В тенге" value={formatKzt(s.savingsKzt, 0)} />
           {s.usdt > 0 && <ListRow icon={Repeat} title="USDT" sub="Хранение у кастодиана банка" value={`${formatNum(s.usdt, 2)} USDT`} valueSub={`≈ ${formatKzt(s.usdt * USDT_KZT, 0)}`} onClick={() => nav('/otc')} />}
+          {s.bankLinks.map((b) => (
+            <ListRow key={b.id} icon={Landmark} title={b.bank} sub="В другом банке · только просмотр" value={formatKzt(b.balanceKzt, 0)} onClick={() => nav('/banks')} />
+          ))}
           {s.partnerConnected && <ListRow icon={Repeat} title={PARTNER.name} sub="Хранится у партнёра, не у банка" value={`${PARTNER.usdt} USDT`} valueSub={`≈ ${formatKzt(partnerKzt, 0)}`} onClick={() => nav('/partner')} />}
         </List>
+        {s.bankLinks.length === 0 && (
+          <button onClick={() => nav('/banks')} className="mt-1 flex w-full items-center gap-3 rounded-2xl border border-dashed border-line px-4 py-3 text-left text-sm font-medium text-ink-2">
+            <Landmark size={18} /> Подключить счёт в другом банке
+          </button>
+        )}
 
         {/* golden rain */}
         <button data-tour="loyalty" onClick={() => nav('/cashback')} className="mt-4 w-full rounded-3xl bg-ink p-5 text-left text-white">
