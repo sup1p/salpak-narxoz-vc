@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { BookOpen, Coins, Home as HomeIcon, Plus, User } from 'lucide-react'
 import { useBank } from './store/useBank'
@@ -56,10 +57,15 @@ function Guard({ children }: { children: React.ReactNode }) {
 
 function Shell() {
   const onboarded = useBank((s) => s.onboarded)
+  const { pathname } = useLocation()
+  const scroller = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    scroller.current?.scrollTo(0, 0)
+  }, [pathname])
   return (
     <div className="flex min-h-full items-center justify-center sm:py-6">
-      <div className="relative h-[100dvh] w-full overflow-hidden bg-paper sm:h-[844px] sm:w-[390px] sm:rounded-[44px] sm:border-[10px] sm:border-ink sm:shadow-2xl">
-        <div className="no-scrollbar h-full overflow-y-auto">
+      <div className="relative h-[100dvh] w-full overflow-hidden bg-paper sm:h-[min(844px,calc(100dvh-48px))] sm:w-[390px] sm:rounded-[44px] sm:border-[10px] sm:border-ink sm:shadow-2xl">
+        <div ref={scroller} className="no-scrollbar h-full overflow-y-auto">
           <Routes>
             <Route path="/" element={<Navigate to={onboarded ? '/home' : '/welcome'} replace />} />
             <Route path="/welcome" element={<Intro />} />

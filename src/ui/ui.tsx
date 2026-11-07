@@ -82,7 +82,7 @@ export function Row({ label, value, strong, onLabel }: { label: ReactNode; value
       <span onClick={onLabel} className={`text-sm ${onLabel ? 'cursor-pointer underline decoration-dotted underline-offset-4' : ''} ${strong ? 'text-ink' : 'text-ink-2'}`}>
         {label}
       </span>
-      <span className={`num text-right ${strong ? 'text-lg' : 'text-sm'}`}>{value}</span>
+      <span className={`num whitespace-nowrap text-right ${strong ? 'text-lg' : 'text-sm'}`}>{value}</span>
     </div>
   )
 }
