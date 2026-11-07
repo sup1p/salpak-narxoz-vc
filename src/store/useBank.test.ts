@@ -122,3 +122,19 @@ describe('other banks', () => {
     expect(s().bankLinks).toHaveLength(0)
   })
 })
+
+describe('payments', () => {
+  it('refuses a payment above the card balance', () => {
+    const r = s().payCard(60000, 'Интернет')
+    expect(r.error).toBe('INSUFFICIENT_FUNDS')
+    expect(s().cardKzt).toBe(50000)
+  })
+  it('previews the same cashback the payment then pays', async () => {
+    const { previewCashback } = await import('./useBank')
+    s().setCashbackMode('gold')
+    const p = previewCashback(s(), 3000)
+    const r = s().payCard(3000, 'Мобильная связь')
+    expect(r.grams).toBeCloseTo(p.grams, 6)
+    expect(p.kzt).toBe(30)
+  })
+})
