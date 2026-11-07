@@ -1,4 +1,4 @@
-import { ArrowDownLeft, Bell, BookOpen, ChevronRight, Coffee, Coins, CreditCard, FileText, Gift, PiggyBank, Plus, Repeat, Sparkles, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowRight, Bell, BookOpen, ChevronRight, Coffee, Coins, CreditCard, FileText, Gift, PiggyBank, Plus, Repeat, Sparkles, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PARTNER, USDT_KZT } from '../data/seed'
@@ -6,21 +6,21 @@ import { nextStatusGap, STATUS_LABEL } from '../domain/loyalty'
 import { formatGrams, formatKzt, formatNum } from '../domain/money'
 import { hasRealBuy, selectPortfolio, selectRegular, selectStatus, useBank } from '../store/useBank'
 import { GoldCapsule, MiningRain } from '../ui/gold'
-import { Badge, Balance, Button, List, ListRow, SectionTitle, TabPage, Toast } from '../ui/ui'
+import { Badge, Balance, List, ListRow, SectionTitle, TabPage, Toast } from '../ui/ui'
 import { useUnreadCount } from './messages'
 
 function Action({ icon: Icon, label, onClick, gold }: { icon: LucideIcon; label: string; onClick: () => void; gold?: boolean }) {
   return (
     <button onClick={onClick} className="flex flex-col items-center gap-1.5">
-      <span className={`grid h-12 w-12 place-items-center rounded-full ${gold ? 'bg-gold text-ink' : 'bg-surface text-ink'}`}>
-        <Icon size={22} strokeWidth={1.8} />
+      <span className={`grid h-14 w-14 place-items-center rounded-full ${gold ? 'bg-gold text-ink' : 'bg-surface text-ink'}`}>
+        <Icon size={24} strokeWidth={1.9} />
       </span>
-      <span className="text-xs font-medium">{label}</span>
+      <span className="text-[13px] font-semibold">{label}</span>
     </button>
   )
 }
 
-/** «Главная» tab (DESIGN-SYSTEM §13). */
+/** «Главная» (DESIGN-SYSTEM §14): Gold Apple visual — white, heavy type, hero banner, saturated cards. */
 export function Home() {
   const nav = useNavigate()
   const s = useBank()
@@ -32,6 +32,7 @@ export function Home() {
   const partnerKzt = s.partnerConnected ? PARTNER.usdt * USDT_KZT : 0
   const total = portfolio + partnerKzt
   const bought = hasRealBuy(s)
+  const buyTo = bought ? '/buy' : '/buy?try=1'
   const [toast, setToast] = useState('')
   const [rain, setRain] = useState(false)
   const [pulse, setPulse] = useState(0)
@@ -50,14 +51,14 @@ export function Home() {
     } else flash(`Оплата 1 500 ₸ · кешбэк +${formatNum(r.kzt, 0)} ₸`)
   }
 
-  const forYou: { icon: LucideIcon; title: string; sub: string; to: string }[] = [
+  const forYou: { icon: LucideIcon; title: string; sub: string; to: string; bg: string }[] = [
     !bought
-      ? { icon: Coins, title: 'Первая покупка без риска', sub: 'Режим Пробы — виртуальные деньги', to: '/buy?try=1' }
+      ? { icon: Coins, title: 'Первая покупка без риска', sub: 'Режим Пробы', to: '/buy?try=1', bg: 'bg-lime' }
       : s.cashbackMode !== 'gold'
-        ? { icon: Sparkles, title: 'Кешбэк в граммах', sub: 'Покупки картой → золото', to: '/cashback' }
-        : { icon: Gift, title: 'Позови друга', sub: '0,01 г другу, +0,05 г обоим', to: '/invite' },
-    { icon: BookOpen, title: s.lessonsDone.includes('spread') ? 'Академия' : 'Спред за 2 минуты', sub: `${s.lessonsDone.length} из 7 уроков пройдено`, to: s.lessonsDone.includes('spread') ? '/academy' : '/academy/spread' },
-    { icon: FileText, title: 'Декларация', sub: 'Подготовим данные за тебя', to: '/tax' },
+        ? { icon: Sparkles, title: 'Кешбэк в граммах', sub: 'Покупки картой → золото', to: '/cashback', bg: 'bg-lime' }
+        : { icon: Gift, title: 'Позови друга', sub: '+0,05 г вам обоим', to: '/invite', bg: 'bg-lime' },
+    { icon: BookOpen, title: s.lessonsDone.includes('spread') ? 'Академия' : 'Спред за 2 минуты', sub: `${s.lessonsDone.length} из 7 уроков`, to: s.lessonsDone.includes('spread') ? '/academy' : '/academy/spread', bg: 'bg-lilac' },
+    { icon: FileText, title: 'Декларация', sub: 'Подготовим за тебя', to: '/tax', bg: 'bg-peach' },
   ]
 
   const recent = s.history.filter((o) => o.id !== 'seed-cb').slice(0, 3)
@@ -68,66 +69,83 @@ export function Home() {
       <MiningRain show={rain} status={status} />
 
       {/* header */}
-      <div className="flex items-center justify-between px-4 pb-2 pt-4">
+      <div className="flex items-center justify-between px-4 pb-1 pt-4">
         <button onClick={() => nav('/more')} className="flex items-center gap-3 text-left">
           <span className="grid h-10 w-10 place-items-center rounded-full bg-gold text-base font-bold">А</span>
           <div>
-            <div className="text-[13px] text-ink-2">GRAM by BCC</div>
-            <div className="text-[17px] font-semibold leading-tight">Айгерим</div>
+            <div className="text-[12px] font-semibold">
+              GRAM <span className="text-green">by BCC</span>
+            </div>
+            <div className="text-[17px] font-bold leading-tight">Айгерим</div>
           </div>
         </button>
-        <button aria-label="Сообщения" onClick={() => nav('/messages')} className="relative grid h-10 w-10 place-items-center rounded-full bg-white">
-          <Bell size={20} strokeWidth={1.8} />
+        <button aria-label="Сообщения" onClick={() => nav('/messages')} className="relative grid h-10 w-10 place-items-center rounded-full bg-surface">
+          <Bell size={20} strokeWidth={1.9} />
           {unread > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-err" />}
         </button>
       </div>
 
       <div className="px-4">
-        {/* total + quick actions */}
-        <div className="rounded-2xl bg-white p-4">
-          <div data-tour="total">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-ink-2">Всего</div>
-              <Badge tone="gold">{STATUS_LABEL[status]} · кешбэк {status === 'sand' ? '1' : status === 'nugget' ? '1,5' : '2'}%</Badge>
-            </div>
-            <Balance value={total} className="mt-2 text-[36px]" />
-            <div className="num mt-1 text-xs text-ink-3">≈ {formatGrams(total / s.market, 2)} золота — эквивалент, не золото</div>
+        {/* total — no card, big heavy type */}
+        <div data-tour="total" className="pt-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium text-ink-2">Всего</div>
+            <Badge tone="gold">
+              {STATUS_LABEL[status]} · кешбэк {status === 'sand' ? '1' : status === 'nugget' ? '1,5' : '2'}%
+            </Badge>
           </div>
-          <div data-tour="actions" className="mt-4 grid grid-cols-3 border-t border-line pt-4">
-            <Action icon={ArrowDownLeft} label="Пополнить" onClick={() => { s.topUp(10000); flash('Пополнение +10 000 ₸ (тест)', 1800) }} />
-            <Action icon={Coffee} label="Оплатить" onClick={pay} />
-            <Action icon={Plus} label="Купить золото" gold onClick={() => nav(bought ? '/buy' : '/buy?try=1')} />
+          <Balance value={total} className="mt-1 text-[42px] font-extrabold tracking-[-0.04em]" />
+          <div className="num mt-1 text-xs text-ink-3">≈ {formatGrams(total / s.market, 2)} золота — эквивалент, не золото</div>
+        </div>
+
+        <div data-tour="actions" className="mt-5 grid grid-cols-3">
+          <Action icon={ArrowDownLeft} label="Пополнить" onClick={() => { s.topUp(10000); flash('Пополнение +10 000 ₸ (тест)', 1800) }} />
+          <Action icon={Coffee} label="Оплатить" onClick={pay} />
+          <Action icon={Plus} label="Купить золото" gold onClick={() => nav(buyTo)} />
+        </div>
+
+        {/* hero banner: your gold */}
+        <div data-tour="gold" className="relative mt-6 overflow-hidden rounded-3xl bg-gold-soft">
+          <div className="absolute -right-6 top-6">
+            <GoldCapsule grams={s.gold} height={140} pulse={pulse} />
+          </div>
+          <div className="relative p-5">
+            <div className="text-[13px] font-semibold text-[#7A4A00]">Твоё золото · проба 999,9</div>
+            <div className="num mt-2 text-[34px] font-extrabold leading-none tracking-[-0.03em]">{formatGrams(s.gold)}</div>
+            <div className="num mt-1 text-sm font-medium text-[#5C3A00]">≈ {formatKzt(s.gold * s.market, 0)}</div>
+            {s.gold < 1 && (
+              <div className="mt-4 w-[55%]">
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/70">
+                  <div className="h-full rounded-full bg-ink" style={{ width: `${Math.max(3, s.gold * 100)}%` }} />
+                </div>
+                <div className="num mt-1.5 text-xs font-medium text-[#5C3A00]">До первого грамма — {formatGrams(1 - s.gold, 2)}</div>
+              </div>
+            )}
+            <div className="mt-5 flex gap-2">
+              <button onClick={() => nav('/gold')} className="flex h-11 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white">
+                Перейти к золоту <ArrowRight size={16} />
+              </button>
+              <button onClick={() => nav(buyTo)} className="h-11 rounded-xl bg-white px-4 text-sm font-semibold">
+                Купить
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* gold widget */}
-        <div data-tour="gold" className="mt-3 overflow-hidden rounded-2xl bg-white">
-          <div className="flex items-stretch">
-            <div className="flex-1 p-4 pr-0">
-              <div className="text-sm text-ink-2">Золото · проба 999,9</div>
-              <div className="num mt-1 text-[26px] font-bold leading-tight">{formatGrams(s.gold)}</div>
-              <div className="num text-sm text-ink-2">≈ {formatKzt(s.gold * s.market, 0)}</div>
-              {s.gold < 1 && (
-                <div className="mt-3">
-                  <div className="h-1.5 overflow-hidden rounded-full bg-surface">
-                    <div className="h-full rounded-full bg-gold" style={{ width: `${Math.max(3, s.gold * 100)}%` }} />
-                  </div>
-                  <div className="num mt-1 text-xs text-ink-3">До первого грамма — {formatGrams(1 - s.gold, 2)}</div>
-                </div>
-              )}
-            </div>
-            <div className="flex w-[150px] items-center justify-center">
-              <GoldCapsule grams={s.gold} height={96} pulse={pulse} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 px-4 pb-4">
-            <Button variant="secondary" onClick={() => nav('/gold')}>
-              Перейти к золоту
-            </Button>
-            <Button variant="gold" onClick={() => nav(bought ? '/buy' : '/buy?try=1')}>
-              Купить
-            </Button>
-          </div>
+        {/* for you — saturated cards like Gold Apple category colours */}
+        <SectionTitle>Для тебя</SectionTitle>
+        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
+          {forYou.map((c) => (
+            <button key={c.title} onClick={() => nav(c.to)} className={`flex h-[148px] w-[160px] shrink-0 flex-col justify-between rounded-3xl p-4 text-left ${c.bg}`}>
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-white/70">
+                <c.icon size={20} strokeWidth={1.9} />
+              </span>
+              <div>
+                <div className="text-[16px] font-extrabold leading-tight tracking-[-0.01em]">{c.title}</div>
+                <div className="mt-1 text-xs font-medium text-ink/70">{c.sub}</div>
+              </div>
+            </button>
+          ))}
         </div>
 
         {/* accounts */}
@@ -140,44 +158,30 @@ export function Home() {
         </List>
 
         {/* golden rain */}
-        <button data-tour="loyalty" onClick={() => nav('/cashback')} className="mt-3 w-full rounded-2xl bg-white p-4 text-left">
+        <button data-tour="loyalty" onClick={() => nav('/cashback')} className="mt-4 w-full rounded-3xl bg-ink p-5 text-left text-white">
           <div className="flex items-center justify-between">
-            <div className="text-[15px] font-semibold">Золотой дождь</div>
-            <span className="text-xs text-ink-2">{s.cashbackMode === 'gold' ? 'Кешбэк в золоте' : 'Кешбэк в тенге'}</span>
+            <div className="text-[17px] font-extrabold">Золотой дождь</div>
+            <span className="text-xs text-white/60">{s.cashbackMode === 'gold' ? 'Кешбэк в золоте' : 'Кешбэк в тенге'}</span>
           </div>
           {gap ? (
             <>
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface">
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/15">
                 <div className="h-full rounded-full bg-gold" style={{ width: `${Math.min(100, (portfolio / (gap.next === 'nugget' ? 100000 : 500000)) * 100)}%` }} />
               </div>
-              <div className="num mt-2 text-[13px] text-ink-2">
+              <div className="num mt-2 text-[13px] text-white/70">
                 До статуса «{STATUS_LABEL[gap.next]}» — ещё {formatKzt(Math.max(0, gap.gapKzt), 0)}
                 {gap.next === 'bar' && regular < 2 ? ' и пополнения 2 месяца подряд' : ''}
               </div>
             </>
           ) : (
-            <div className="mt-2 text-[13px] text-ink-2">Максимальный статус — кешбэк 2%</div>
+            <div className="mt-2 text-[13px] text-white/70">Максимальный статус — кешбэк 2%</div>
           )}
         </button>
-
-        {/* for you (replaces round stories) */}
-        <SectionTitle>Для тебя</SectionTitle>
-        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
-          {forYou.map((c) => (
-            <button key={c.title} onClick={() => nav(c.to)} className="flex w-[200px] shrink-0 flex-col justify-between rounded-2xl bg-white p-4 text-left">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-gold-soft text-[#7A5527]">
-                <c.icon size={20} strokeWidth={1.8} />
-              </span>
-              <div className="mt-6 text-[15px] font-semibold leading-tight">{c.title}</div>
-              <div className="mt-1 text-xs text-ink-2">{c.sub}</div>
-            </button>
-          ))}
-        </div>
 
         {/* recent operations */}
         <SectionTitle
           action={
-            <button onClick={() => nav('/operations')} className="flex items-center text-sm font-medium text-ink-2">
+            <button onClick={() => nav('/operations')} className="flex items-center text-sm font-semibold text-ink-2">
               Все <ChevronRight size={16} />
             </button>
           }
@@ -198,7 +202,7 @@ export function Home() {
             ))}
           </List>
         ) : (
-          <div className="rounded-2xl bg-white p-4 text-sm text-ink-2">Пока операций нет — начни с покупки золота от 1000 ₸.</div>
+          <div className="rounded-2xl bg-surface p-4 text-sm text-ink-2">Пока операций нет — начни с покупки золота от 1000 ₸.</div>
         )}
       </div>
     </TabPage>
