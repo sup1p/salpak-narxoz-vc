@@ -4,14 +4,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { LESSONS, MARKET_PRICE, type QuizQ } from '../data/seed'
 import { formatKzt, formatNum } from '../domain/money'
 import { overpayKzt, quoteBuy } from '../domain/pricing'
-import { selectLevel, useBank } from '../store/useBank'
+import { useBank } from '../store/useBank'
 import { Badge, Button, Card, Header, Screen } from '../ui/ui'
 
 export function Academy() {
   const nav = useNavigate()
   const s = useBank()
   const done = s.lessonsDone
-  const level = selectLevel(s)
   return (
     <div className="px-5 pb-28 pt-6">
       <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em]">Академия</h1>
@@ -27,9 +26,7 @@ export function Academy() {
           ))}
         </div>
         <div className="mt-3 text-xs text-white/60">
-          {level === 'investor'
-            ? 'Уровень «Инвестор» открыт.'
-            : 'Все уроки открывают уровень «Инвестор» — как проверка готовности, не как награда.'}
+          Учимся ради себя: уроки ничего не открывают и ничем не награждаются.
         </div>
       </div>
       <div className="mt-4 space-y-2 pb-4">

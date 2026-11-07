@@ -13,8 +13,7 @@ export function Gold() {
   const s = useBank()
   const value = s.gold * s.market
   const cost = s.gold * s.avgPrice
-  const diff = value - cost
-  const pct = cost ? (diff / cost) * 100 : 0
+  const hasGold = s.gold > 0
   const history = [...PRICE_HISTORY.slice(0, -1), s.market]
   const share = (s.gold / BAR.weight) * 100
   const buyPrice = quoteBuy(1000, s.market, 0).price
@@ -33,10 +32,10 @@ export function Gold() {
         <div className="rounded-2xl bg-surface px-4 pb-4 pt-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-ink-2">Токен золота · проба {BAR.fineness}</span>
-            <Badge tone="green">Аудит пройден</Badge>
+            <Badge tone="grey">Аудит · тестовые данные</Badge>
           </div>
           <div className="mt-1 flex justify-center">
-            <GoldCapsule grams={s.gold} height={160} />
+            {hasGold ? <GoldCapsule grams={s.gold} height={160} /> : <div className="grid h-[160px] place-items-center text-center text-sm text-ink-2">Здесь появится твоё золото<br />— щепотка, горка, а потом слиток</div>}
           </div>
           <div className="mt-1 flex items-end justify-between">
             <div>
@@ -62,10 +61,10 @@ export function Gold() {
         <div className="mt-1.5 text-xs text-ink-3">Цена покупки — с учётом спреда 0,5%</div>
 
         {/* stages */}
-        <SectionTitle action={<span className="num text-sm text-ink-2">до слитка {formatGrams(Math.max(0, 1 - s.gold), 2)}</span>}>Твоя стадия</SectionTitle>
+        <SectionTitle action={<span className="num text-sm text-ink-2">до слитка {formatGrams(Math.max(0, 1 - s.gold), 2)}</span>}>Как выглядит твоё золото</SectionTitle>
         <div className="grid grid-cols-3 gap-2">
           {stages.map((st) => (
-            <div key={st.label} className={`rounded-xl p-2 text-center ${st.label === stage ? 'bg-gold-soft' : 'bg-surface'}`}>
+            <div key={st.label} className={`rounded-xl p-2 text-center ${hasGold && st.label === stage ? 'bg-gold-soft' : 'bg-surface'}`}>
               <img src={st.src} alt="" className="gold-img mx-auto h-10 w-full object-cover" />
               <div className="mt-1 text-[13px] font-semibold">{st.title}</div>
               <div className="text-[11px] text-ink-2">{st.hint}</div>
@@ -74,11 +73,19 @@ export function Gold() {
         </div>
 
         {/* price */}
-        <SectionTitle>Цена покупки и сейчас</SectionTitle>
+        <SectionTitle>Цена</SectionTitle>
         <div className="rounded-2xl bg-surface px-4 py-1">
-          <Row label="Средняя цена покупки" value={`${formatNum(s.avgPrice, 0)} ₸/г`} />
           <Row label="Сейчас на рынке" value={`${formatNum(s.market, 0)} ₸/г`} />
-          <Row label="Изменение стоимости" value={`${pct >= 0 ? '+' : ''}${formatNum(pct, 1)}% (${diff >= 0 ? '+' : '−'}${formatNum(Math.abs(diff), 0)} ₸)`} strong />
+          {hasGold ? (
+            <>
+              <Row label="Средняя цена покупки" value={`${formatNum(s.avgPrice, 0)} ₸/г`} />
+              {/* neutral wording, no % change (review fix) */}
+              <Row label="Ты заплатил(а)" value={formatKzt(cost, 0)} />
+              <Row label="Сейчас стоит" value={formatKzt(value, 0)} strong />
+            </>
+          ) : (
+            <Row label="Средняя цена покупки" value="Появится после первой покупки" />
+          )}
         </div>
         <div className="mt-2 rounded-2xl bg-surface p-4">
           <div className="mb-1 flex justify-between text-xs text-ink-2">

@@ -8,7 +8,7 @@ import { Nugget, Sticker } from '../ui/gold'
 import { Button, Card, Header, Screen } from '../ui/ui'
 
 const STATUSES: { id: Status; cond: string; look: string }[] = [
-  { id: 'sand', cond: 'портфель в банке до 100 000 ₸', look: 'тонкая струйка' },
+  { id: 'sand', cond: 'деньги в банке до 100 000 ₸', look: 'тонкая струйка' },
   { id: 'nugget', cond: '100 000 – 500 000 ₸', look: 'частицы и самородки' },
   { id: 'bar', cond: 'от 500 000 ₸ и пополнения 2 месяца подряд', look: 'золотой дождь' },
 ]
@@ -117,7 +117,7 @@ export function Cashback() {
           <h2 className="text-xl font-bold">Золотой дождь</h2>
           <Nugget size={40} />
         </div>
-        <p className="mt-1 text-sm text-ink-2">Чем больше твои сбережения в банке — тем больше золота падает с каждой покупки. Активы партнёров не учитываются — они хранятся не у банка.</p>
+        <p className="mt-1 text-sm text-ink-2">Чем больше твои деньги в банке — тем выше кешбэк за платежи. Золото учитываем по цене покупки, поэтому статус не меняется от курса. Счета других банков и партнёров не учитываются.</p>
         <div className="mt-3 space-y-2">
           {STATUSES.map((st) => (
             <Card key={st.id} className={`flex items-center justify-between ${status === st.id ? 'ring-2 ring-gold' : ''}`}>

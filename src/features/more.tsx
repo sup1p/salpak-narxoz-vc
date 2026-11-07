@@ -1,18 +1,18 @@
-import { BarChart3, FileText, Fingerprint, HelpCircle, KeyRound, RotateCcw, ShieldCheck, Unlock, User } from 'lucide-react'
+import { BarChart3, FileText, Fingerprint, FlaskConical, HelpCircle, KeyRound, RotateCcw, Send, ShieldCheck, User } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { STATUS_LABEL } from '../domain/loyalty'
-import { selectLevel, selectStatus, useBank } from '../store/useBank'
+import { CASHBACK_RATE, STATUS_LABEL } from '../domain/loyalty'
+import { formatNum } from '../domain/money'
+import { selectInvestorAccess, selectStatus, useBank } from '../store/useBank'
 import { Badge, Header, List, ListRow, PageTitle, Screen, SectionTitle, TabPage, TestBadge, Toast } from '../ui/ui'
 
-const LEVEL_LABEL = { start: 'Старт', saver: 'Копилка', investor: 'Инвестор' } as const
 
 /** «Ещё» tab: profile and everything secondary (DESIGN-SYSTEM §13). */
 export function More() {
   const s = useBank()
   const nav = useNavigate()
   const status = selectStatus(s)
-  const level = selectLevel(s)
+  const access = selectInvestorAccess(s)
   const [toast, setToast] = useState('')
   const flash = (t: string) => {
     setToast(t)
@@ -32,33 +32,47 @@ export function More() {
           </div>
         </div>
         <div className="mt-2 flex gap-2">
-          <Badge tone="gold">Статус: {STATUS_LABEL[status]}</Badge>
-          <Badge tone="green">Уровень: {LEVEL_LABEL[level]}</Badge>
+          <Badge tone="gold">
+            Кешбэк: {STATUS_LABEL[status]} · {formatNum(CASHBACK_RATE[status] * 100, 1)}%
+          </Badge>
         </div>
 
         <SectionTitle>Профиль</SectionTitle>
         <List>
           <ListRow icon={User} title="Личные данные" sub="Имя, телефон" onClick={() => flash('В прототипе данные тестовые')} />
-          <ListRow icon={Unlock} title="Уровни" sub={LEVEL_LABEL[level]} onClick={() => nav('/levels')} />
-          <ListRow icon={BarChart3} title="Метрики гипотезы" sub="Активация, покупка, кешбэк, возвраты" onClick={() => nav('/metrics')} />
+          <ListRow icon={ShieldCheck} title="Тест на понимание рисков" sub={access ? 'Пройден — USDT и МФЦА доступны' : 'Нужен для USDT и партнёров МФЦА'} onClick={() => nav('/risk-test')} />
         </List>
 
         <SectionTitle>Безопасность и документы</SectionTitle>
         <List>
           <ListRow icon={ShieldCheck} title="Безопасность" sub="PIN, Face ID, мошенники" onClick={() => nav('/security')} />
           <ListRow icon={FileText} title="Документы и тарифы" sub="Спред, комиссии, хранение, риски" onClick={() => nav('/documents')} />
-          <ListRow icon={HelpCircle} title="Поддержка" sub="Ответим в чате — в прототипе недоступно" onClick={() => flash('Поддержка в прототипе недоступна')} />
+          <ListRow icon={HelpCircle} title="Поддержка" sub="Чат — отвечаем на частые вопросы" onClick={() => nav('/support')} />
         </List>
 
         <SectionTitle>Демо для защиты</SectionTitle>
+        <List className="mb-2">
+          <ListRow icon={BarChart3} title="Метрики гипотезы" sub="Активация, покупка, кешбэк, возвраты" onClick={() => nav('/metrics')} />
+          <ListRow
+            icon={FlaskConical}
+            title="Демо-режим"
+            sub="Кнопки «ускорить таймер», отказ банка и т. п."
+            chevron={false}
+            right={
+              <button role="switch" aria-checked={s.demoMode} aria-label="Демо-режим" onClick={() => s.setDemoMode(!s.demoMode)} className={`relative h-7 w-12 shrink-0 rounded-full transition ${s.demoMode ? 'bg-green' : 'bg-line'}`}>
+                <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${s.demoMode ? 'left-[22px]' : 'left-0.5'}`} />
+              </button>
+            }
+          />
+        </List>
         <div className="rounded-2xl bg-surface p-4">
-          <div className="text-sm text-ink-2">Статус «Золотого дождя»</div>
+          <div className="text-sm text-ink-2">Статус кешбэка</div>
           <div className="mt-2 grid grid-cols-3 gap-2">
             <button className="h-10 rounded-xl bg-white text-sm font-medium" onClick={() => s.setRegularMonths(0)}>
-              Как есть
+              Базовый
             </button>
             <button className="h-10 rounded-xl bg-white text-sm font-medium" onClick={() => s.cardKzt + s.savingsKzt < 100000 && s.topUp(100000 - s.cardKzt - s.savingsKzt)}>
-              Самородок
+              Плюс
             </button>
             <button
               className="h-10 rounded-xl bg-white text-sm font-medium"
@@ -67,7 +81,7 @@ export function More() {
                 s.setRegularMonths(2)
               }}
             >
-              Слиток
+              Макс
             </button>
           </div>
           <button
@@ -122,9 +136,9 @@ export function Security() {
 }
 
 const DOCS = [
-  { t: 'Тарифы', d: 'Спред 0,5% от рыночной цены при покупке и продаже. Комиссия 0,3% от суммы, минимум 50 ₸. Минимальная покупка 1 000 ₸. Цена фиксируется на 30 секунд.' },
+  { t: 'Тарифы', d: 'Спред 0,5% от рыночной цены при покупке и продаже. Комиссия 0,3% от суммы, без минимума (≈ 0,8% сверх рынка вместе со спредом). Минимальная покупка 1 000 ₸. Цена фиксируется на 30 секунд.' },
   { t: 'Хранение золота', d: '1 токен = 1 г золота пробы 999,9 в слитке с номером. Слиток хранит независимый хранитель (кастодиан), аудит — раз в квартал.' },
-  { t: 'Кешбэк и статусы', d: 'Кешбэк начисляется только за покупки картой: 1% / 1,5% / 2% по статусу. Лимит 5 000 ₸ в месяц. На остаток ничего не начисляется.' },
+  { t: 'Кешбэк и статусы', d: 'Кешбэк начисляется только за платежи картой: Базовый 1% / Плюс 1,5% / Макс 2%. Статус считается по деньгам в банке и цене покупки золота, а не по рынку. Лимит 5 000 ₸ в месяц. На остаток ничего не начисляется.' },
   { t: 'Риски', d: 'Золото — актив, а не депозит: цена может снижаться, актив не застрахован как вклад. Продажа сразу после покупки — минус спред и комиссия.' },
   { t: 'Налоги', d: 'Золото и USDT отражаются в декларации (форма 250), продажи и бонусы — в форме 270. Срок — до 15 сентября. Это подсказка, не налоговая консультация.' },
   { t: 'Партнёры МФЦА', d: 'Только просмотр баланса с согласия клиента. Активы хранит партнёр, он же за них отвечает. Согласие можно отозвать в любой момент.' },
@@ -146,6 +160,46 @@ export function Documents() {
           </div>
         ))}
         <p className="pt-2 text-xs text-ink-3">Условия — гипотеза прототипа; регуляторная модель проверяется отдельно.</p>
+      </div>
+    </Screen>
+  )
+}
+
+const FAQ = [
+  { q: 'Из чего складывается цена золота?', a: 'Рыночная цена + спред 0,5% + комиссия 0,3%. Всё видно в «Рентгене цены» перед покупкой. На покупке 1 000 ₸ это ≈ 0,8% сверх рынка.' },
+  { q: 'Где хранится моё золото?', a: 'В слитке пробы 999,9 у независимого хранителя. Номер слитка и дату аудита видно на экране «Золото».' },
+  { q: 'Как вывести деньги?', a: 'Продайте золото — деньги сразу придут на карту GRAM, а с неё можно перевести в любой банк.' },
+  { q: 'Нужно ли платить налог?', a: 'Золото — актив, его нужно отразить в декларации. В разделе «Налоги» мы готовим все данные. Это подсказка, не налоговая консультация.' },
+]
+
+/** Support chat stub (review 2026-11-07): canned answers instead of a dead end. */
+export function Support() {
+  const [msgs, setMsgs] = useState<{ from: 'bot' | 'me'; text: string }[]>([
+    { from: 'bot', text: 'Здравствуйте! Это поддержка GRAM. Выберите вопрос — ответим сразу. Живой оператор в прототипе не подключён.' },
+  ])
+  const ask = (i: number) => setMsgs((m) => [...m, { from: 'me', text: FAQ[i].q }, { from: 'bot', text: FAQ[i].a }])
+  return (
+    <Screen>
+      <Header title="Поддержка" />
+      <div className="flex flex-1 flex-col px-4 pb-4">
+        <div className="flex-1 space-y-2">
+          {msgs.map((m, i) => (
+            <div key={i} className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-[15px] leading-snug ${m.from === 'me' ? 'ml-auto bg-ink text-white' : 'bg-surface'}`}>
+              {m.text}
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {FAQ.map((f, i) => (
+            <button key={f.q} onClick={() => ask(i)} className="rounded-full bg-gold-soft px-3 py-2 text-left text-sm font-medium">
+              {f.q}
+            </button>
+          ))}
+        </div>
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-surface px-3">
+          <input disabled placeholder="Свободный ввод — в полной версии" className="h-11 flex-1 bg-transparent text-sm outline-none" aria-label="Сообщение" />
+          <Send size={18} className="text-ink-3" />
+        </div>
       </div>
     </Screen>
   )
