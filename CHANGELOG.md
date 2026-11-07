@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- Продакшн-деплой на Vercel: https://gram-virid-eta.vercel.app (проект `gram`).
+
 ## [0.7.0] — 2026-11-07
 
 ### Added
