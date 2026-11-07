@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { PARTNER, USDT_KZT } from '../data/seed'
 import { nextStatusGap, STATUS_LABEL } from '../domain/loyalty'
 import { formatGrams, formatKzt, formatNum } from '../domain/money'
-import { hasRealBuy, selectOtherBanksKzt, selectPortfolio, selectRegular, selectStatus, useBank } from '../store/useBank'
+import { hasRealBuy, selectCashbackStats, selectOtherBanksKzt, selectPortfolio, selectRegular, selectStatus, useBank } from '../store/useBank'
 import { GoldCapsule } from '../ui/gold'
 import { Badge, Balance, List, ListRow, Logo, SectionTitle, TabPage } from '../ui/ui'
 import { useUnreadCount } from './messages'
@@ -32,6 +32,7 @@ export function Home() {
   const otherBanks = selectOtherBanksKzt(s)
   const total = portfolio + partnerKzt + otherBanks
   const bought = hasRealBuy(s)
+  const cb = selectCashbackStats(s)
   const buyTo = bought ? '/buy' : '/buy?try=1'
 
 
@@ -157,6 +158,16 @@ export function Home() {
           <div className="flex items-center justify-between">
             <div className="text-[17px] font-extrabold">Золотой дождь</div>
             <span className="text-xs text-white/60">{s.cashbackMode === 'gold' ? 'Кешбэк в золоте' : 'Кешбэк в тенге'}</span>
+          </div>
+          <div className="mt-3 flex items-end justify-between">
+            <div>
+              <div className="text-xs text-white/60">Кешбэк в этом месяце</div>
+              <div className="num text-[22px] font-extrabold tracking-[-0.02em]">+{formatKzt(cb.monthTotalKzt, 0)}</div>
+            </div>
+            <div className="num text-right text-xs text-white/60">
+              {cb.monthGrams > 0 && <div>{formatNum(cb.monthGrams, 4)} г золотом</div>}
+              <div>лимит {formatKzt(cb.usedKzt, 0)} / {formatKzt(cb.capKzt, 0)}</div>
+            </div>
           </div>
           {gap ? (
             <>
