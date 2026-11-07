@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import { useBank } from '../store/useBank'
 
 /**
@@ -20,6 +20,7 @@ interface Box {
   left: number
   width: number
   height: number
+  radius: number
 }
 
 export function Tour({ frame, scroller }: { frame: RefObject<HTMLDivElement | null>; scroller: RefObject<HTMLDivElement | null> }) {
@@ -27,6 +28,7 @@ export function Tour({ frame, scroller }: { frame: RefObject<HTMLDivElement | nu
   const [i, setI] = useState(0)
   const [box, setBox] = useState<Box | null>(null)
   const [tipTop, setTipTop] = useState(0)
+  const [tick, setTick] = useState(0)
   const tip = useRef<HTMLDivElement>(null)
   const active = onboarded && !tourDone
 
@@ -38,34 +40,53 @@ export function Tour({ frame, scroller }: { frame: RefObject<HTMLDivElement | nu
     if (!el || !f) return
     const r = el.getBoundingClientRect()
     const p = f.getBoundingClientRect()
-    const pad = 6
-    setBox({ top: r.top - p.top - pad, left: r.left - p.left - pad, width: r.width + pad * 2, height: r.height + pad * 2 })
+    // absolute children are positioned from the padding box: subtract the frame border
+    const ox = p.left + f.clientLeft
+    const oy = p.top + f.clientTop
+    const pad = 4
+    const fw = f.clientWidth
+    const fh = f.clientHeight
+    const left = Math.max(2, r.left - ox - pad)
+    const top = Math.max(2, r.top - oy - pad)
+    const right = Math.min(fw - 2, r.right - ox + pad)
+    const bottom = Math.min(fh - 2, r.bottom - oy + pad)
+    // follow the element's own corner radius so the cut-out hugs it
+    const own = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0
+    setBox({ top, left, width: right - left, height: bottom - top, radius: own ? own + pad : 14 })
   }, [frame, target])
 
   // bring the target into view (only elements inside the scroll area), then measure
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!active) return
     const el = target()
-    if (!el) return
+    if (!el) {
+      // parent refs attach after child layout effects on first mount — retry next frame
+      const retry = setTimeout(() => setTick((t) => t + 1), 16)
+      return () => clearTimeout(retry)
+    }
     if (scroller.current?.contains(el)) {
       const sc = scroller.current
       const er = el.getBoundingClientRect()
       const sr = sc.getBoundingClientRect()
       const want = sc.scrollTop + (er.top - sr.top) - Math.max(16, (sr.height - er.height) / 2 - 80)
-      sc.scrollTo({ top: Math.max(0, want), behavior: 'smooth' })
+      // instant scroll: the cut-out must never lag behind the element
+      sc.scrollTo({ top: Math.max(0, want), behavior: 'auto' })
     }
-    const t1 = setTimeout(measure, 50)
-    const t2 = setTimeout(measure, 380)
+    measure() // synchronous: layout is forced by getBoundingClientRect, no timer needed
+    const raf = requestAnimationFrame(measure)
+    const t1 = setTimeout(measure, 120)
+    const t2 = setTimeout(measure, 400)
     const sc = scroller.current
     sc?.addEventListener('scroll', measure, { passive: true })
     window.addEventListener('resize', measure)
     return () => {
+      cancelAnimationFrame(raf)
       clearTimeout(t1)
       clearTimeout(t2)
       sc?.removeEventListener('scroll', measure)
       window.removeEventListener('resize', measure)
     }
-  }, [active, i, measure, scroller, target])
+  }, [active, i, measure, scroller, target, tick])
 
   // place the hint below or above the highlight and clamp it inside the frame
   useLayoutEffect(() => {
@@ -85,10 +106,17 @@ export function Tour({ frame, scroller }: { frame: RefObject<HTMLDivElement | nu
   return (
     <div className="absolute inset-0 z-50" role="dialog" aria-modal="true" aria-label="Знакомство с приложением">
       <div
-        className="pointer-events-none absolute rounded-2xl ring-2 ring-gold transition-all duration-300"
-        style={{ ...box, boxShadow: '0 0 0 4000px rgba(20,21,24,.6)' }}
+        className="pointer-events-none absolute transition-[top,left,width,height] duration-200"
+        style={{
+          top: box.top,
+          left: box.left,
+          width: box.width,
+          height: box.height,
+          borderRadius: box.radius,
+          boxShadow: '0 0 0 2px #F2AE3A, 0 0 0 4000px rgba(11,11,12,.6)',
+        }}
       />
-      <div ref={tip} className="absolute inset-x-4 rounded-2xl bg-white p-4 shadow-2xl transition-[top] duration-300" style={{ top: tipTop }}>
+      <div ref={tip} className="absolute inset-x-4 rounded-2xl bg-white p-4 shadow-2xl transition-[top] duration-200" style={{ top: tipTop }}>
         <div className="flex items-center justify-between">
           <span className="num text-xs text-ink-3">
             {i + 1} из {STEPS.length}
