@@ -99,3 +99,26 @@ describe('system completion', () => {
     expect(selectRegular(s())).toBe(1)
   })
 })
+
+describe('other banks', () => {
+  it('tops up from an external card with a titled operation', () => {
+    s().topUp(20000, 'Пополнение с карты •• 4821')
+    expect(s().cardKzt).toBe(70000)
+    expect(s().history[0].title).toBe('Пополнение с карты •• 4821')
+    expect(s().events.some((e) => e.name === 'external_topup')).toBe(true)
+  })
+  it('stores only the last 4 digits of a new card', () => {
+    const c = s().addCard('9910')
+    expect(c.last4).toBe('9910')
+    expect(JSON.stringify(s().extCards)).not.toMatch(/\d{5,}/)
+  })
+  it('links and revokes a read-only bank account without touching the status', async () => {
+    const { selectOtherBanksKzt, selectStatus } = await import('./useBank')
+    const before = selectStatus(s())
+    s().connectBank('Банк А (тест)', 184300)
+    expect(selectOtherBanksKzt(s())).toBe(184300)
+    expect(selectStatus(s())).toBe(before)
+    s().revokeBank(s().bankLinks[0].id)
+    expect(s().bankLinks).toHaveLength(0)
+  })
+})

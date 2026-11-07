@@ -39,6 +39,8 @@ export type EventName =
   | 'tax_export'
   | 'partner_connected'
   | 'otc_usdt'
+  | 'external_topup'
+  | 'bank_linked'
 export interface Evt {
   name: EventName
   at: number
@@ -47,6 +49,18 @@ export interface Invite {
   name: string
   status: 'invited' | 'bought'
   at: number
+}
+
+export interface ExtCard {
+  id: string
+  last4: string
+}
+/** Read-only account in another bank (Open Banking, CONCEPT §5.13). */
+export interface BankLink {
+  id: string
+  bank: string
+  balanceKzt: number
+  connectedAt: number
 }
 
 export interface BankState {
@@ -77,6 +91,8 @@ export interface BankState {
   events: Evt[]
   installedAt: number
   messagesReadAt: number
+  extCards: ExtCard[]
+  bankLinks: BankLink[]
   history: Op[]
   lastReceipt?: Receipt
   usedQuoteIds: string[]
@@ -86,7 +102,11 @@ interface Actions {
   finishOnboarding(): void
   finishTour(): void
   markFactsSeen(): void
-  topUp(kzt: number): void
+  topUp(kzt: number, title?: string): void
+  addCard(last4: string): ExtCard
+  connectBank(bank: string, balanceKzt: number): void
+  revokeBank(id: string): void
+  debitBank(id: string, kzt: number): void
   confirm(r: Receipt, now: number): OpError | null
   payCard(spendKzt: number, title?: string): { grams: number; kzt: number }
   setCashbackMode(m: 'kzt' | 'gold'): void
@@ -106,7 +126,7 @@ interface Actions {
 }
 
 export const FRIEND_BONUS_G = 0.05
-const ONCE: EventName[] = ['install', 'activation', 'first_purchase', 'cashback_gold', 'return_d1', 'return_d7', 'sandbox_try', 'sandbox_to_real', 'spread_understood', 'risk_facts_seen', 'partner_connected']
+const ONCE: EventName[] = ['bank_linked', 'install', 'activation', 'first_purchase', 'cashback_gold', 'return_d1', 'return_d7', 'sandbox_try', 'sandbox_to_real', 'spread_understood', 'risk_facts_seen', 'partner_connected']
 
 const fresh = (): BankState => {
   const now = Date.now()
@@ -136,6 +156,8 @@ const fresh = (): BankState => {
     events: [{ name: 'install', at: now }],
     installedAt: now,
     messagesReadAt: 0,
+    extCards: [{ id: 'card-4821', last4: '4821' }],
+    bankLinks: [],
     history: [{ id: 'seed-cb', type: 'cashback', title: 'Кешбэк за прошлые покупки', kzt: 0, grams: INITIAL.gold, at: now - 86400000 * 3 }],
     usedQuoteIds: [],
   }
@@ -165,12 +187,13 @@ export const useBank = create<BankState & Actions>()(
         get().track('risk_facts_seen')
       },
 
-      topUp: (kzt) => {
+      topUp: (kzt, title = 'Пополнение (тест)') => {
         const now = Date.now()
+        if (title !== 'Пополнение (тест)') get().track('external_topup', now)
         set((s) => ({
           cardKzt: s.cardKzt + kzt,
           topupMonths: s.topupMonths.includes(monthKey(now)) ? s.topupMonths : [...s.topupMonths, monthKey(now)],
-          history: [{ id: opId(), type: 'topup', title: 'Пополнение (тест)', kzt, grams: 0, at: now }, ...s.history],
+          history: [{ id: opId(), type: 'topup', title, kzt, grams: 0, at: now }, ...s.history],
         }))
       },
 
@@ -328,6 +351,17 @@ export const useBank = create<BankState & Actions>()(
         get().track(days >= 7 ? 'return_d7' : 'return_d1', s.installedAt + days * 86400000)
       },
 
+      addCard: (last4) => {
+        const card = { id: `card-${last4}-${Date.now().toString(36)}`, last4 }
+        set((s) => ({ extCards: [...s.extCards, card] }))
+        return card
+      },
+      connectBank: (bank, balanceKzt) => {
+        set((s) => ({ bankLinks: [...s.bankLinks.filter((b) => b.bank !== bank), { id: `bank-${Date.now().toString(36)}`, bank, balanceKzt, connectedAt: Date.now() }] }))
+        get().track('bank_linked')
+      },
+      debitBank: (id, kzt) => set((s) => ({ bankLinks: s.bankLinks.map((b) => (b.id === id ? { ...b, balanceKzt: b.balanceKzt - kzt } : b)) })),
+      revokeBank: (id) => set((s) => ({ bankLinks: s.bankLinks.filter((b) => b.id !== id) })),
       markMessagesRead: () => set({ messagesReadAt: Date.now() }),
       reset: () => set(fresh()),
     }),
@@ -362,3 +396,6 @@ export function selectLevel(s: BankState): Level {
   if (computed === 'saver' && s.lessonsDone.length >= LESSONS.length) computed = 'investor'
   return RANK[s.level] > RANK[computed] ? s.level : computed
 }
+
+/** Accounts in other banks (read-only): shown in the total, excluded from the loyalty status. */
+export const selectOtherBanksKzt = (s: BankState) => s.bankLinks.reduce((a, b) => a + b.balanceKzt, 0)
