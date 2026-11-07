@@ -84,6 +84,11 @@ Closes US-3.1, US-3.2, US-3.3.
 - Подача: «воспитываем финансовую привычку», **никогда** «подсаживаем». Nestlé — только кейс Японии 1970-х.
 - Денежная математика — только в `src/domain/` и только с тестами; цифры из CONCEPT.md §6 закреплены тестами.
 
+## Дизайн: Impeccable (обязательно)
+
+- Любая UI-правка — по [Impeccable](https://github.com/pbakaus/impeccable) (`.claude/skills/impeccable`): перед правкой прочитать `reference/craft-floor.md`, после — `./.claude/skills/impeccable/scripts/impeccable detect --json src` (и по живому приложению), находки исправить до слияния. Контекст продукта — `PRODUCT.md`.
+- Layout, навигацию и основной флоу **не менять** без прямого решения команды — только точечные правки (DESIGN-SYSTEM.md §15).
+
 ## Команды
 
 ```bash
