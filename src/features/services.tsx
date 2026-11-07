@@ -1,3 +1,4 @@
+import { LESSONS } from '../data/seed'
 import { ArrowLeftRight, Landmark, Receipt, BookOpen, Coins, FileText, Gift, Link2, Lock, PiggyBank, Sparkles, type LucideIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { formatGrams, formatKzt, formatNum } from '../domain/money'
@@ -61,7 +62,7 @@ export function Services() {
     {
       title: 'Знания и документы',
       tiles: [
-        { to: '/academy', icon: BookOpen, tint: 'bg-lilac', title: 'Академия', sub: `${s.lessonsDone.length} из 7 уроков` },
+        { to: '/academy', icon: BookOpen, tint: 'bg-lilac', title: 'Академия', sub: `${s.lessonsDone.length} из ${LESSONS.length} уроков` },
         { to: '/tax', icon: FileText, tint: 'bg-gold-soft', title: 'Налоги и декларация', sub: 'Формы 250 и 270' },
       ],
     },

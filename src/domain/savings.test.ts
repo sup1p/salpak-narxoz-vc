@@ -18,3 +18,17 @@ describe('savings reward (CONCEPT §5.15)', () => {
     expect(daysSince(DAY_MS, 0)).toBe(0)
   })
 })
+
+describe('academy calculators', () => {
+  it('10 000 ₸ a month for 12 months at 14% ≈ 129 501 ₸', async () => {
+    const { savingsProjection } = await import('./savings')
+    const p = savingsProjection(10_000, 12)
+    expect(p.contributed).toBe(120_000)
+    expect(p.total).toBe(129_501)
+    expect(p.reward).toBe(9_501)
+  })
+  it('splits 150 000 ₸ as 75 000 / 45 000 / 30 000', async () => {
+    const { budgetSplit } = await import('./savings')
+    expect(budgetSplit(150_000)).toEqual({ needs: 75_000, wants: 45_000, save: 30_000 })
+  })
+})
