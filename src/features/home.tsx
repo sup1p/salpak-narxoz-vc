@@ -1,3 +1,4 @@
+import { LESSONS } from '../data/seed'
 import { ArrowDownLeft, ArrowRight, Landmark, ScanLine, BookOpen, ChevronRight, CreditCard, FileText, Gift, PiggyBank, Plus, Repeat, Sparkles, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -46,7 +47,7 @@ export function Home() {
     s.cashbackMode !== 'gold'
       ? { icon: Sparkles, title: 'Кешбэк в граммах', sub: 'Платежи картой → золото', to: '/cashback', bg: 'bg-lime' }
       : { icon: Gift, title: 'Позови друга', sub: 'Другу 0,005 г в подарок', to: '/invite', bg: 'bg-lime' },
-    { icon: BookOpen, title: s.lessonsDone.includes('spread') ? 'Академия' : 'Спред за 2 минуты', sub: `${s.lessonsDone.length} из 7 уроков`, to: s.lessonsDone.includes('spread') ? '/academy' : '/academy/spread', bg: 'bg-lilac' },
+    { icon: BookOpen, title: s.lessonsDone.includes('spread') ? 'Академия' : 'Спред за 2 минуты', sub: `${s.lessonsDone.length} из ${LESSONS.length} уроков`, to: s.lessonsDone.includes('spread') ? '/academy' : '/academy/spread', bg: 'bg-lilac' },
     s.gold > 0
       ? { icon: FileText, title: 'Декларация', sub: 'Подготовим за тебя', to: '/tax', bg: 'bg-peach' }
       : { icon: Landmark, title: 'Счета других банков', sub: 'Все деньги в одной сумме', to: '/banks', bg: 'bg-peach' },
@@ -134,7 +135,7 @@ export function Home() {
         <SectionTitle>Счета</SectionTitle>
         <List>
           <ListRow icon={CreditCard} title="Карта GRAM" sub="•• 2026" value={formatKzt(s.cardKzt, 0)} />
-          <ListRow icon={PiggyBank} title="Сбережения" sub="В тенге" value={formatKzt(s.savingsKzt, 0)} />
+          <ListRow icon={PiggyBank} title="Сбережения" sub="Вклад в ₸ · 14% годовых" value={formatKzt(s.savingsKzt, 0)} onClick={() => nav('/savings')} />
           {s.usdt > 0 && <ListRow icon={Repeat} title="USDT" sub="Хранение у кастодиана банка" value={`${formatNum(s.usdt, 2)} USDT`} valueSub={`≈ ${formatKzt(s.usdt * USDT_KZT, 0)}`} onClick={() => nav('/otc')} />}
           {s.bankLinks.map((b) => (
             <ListRow key={b.id} icon={Landmark} title={b.bank} sub="В другом банке · только просмотр" value={formatKzt(b.balanceKzt, 0)} onClick={() => nav('/banks')} />

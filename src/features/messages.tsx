@@ -1,28 +1,28 @@
-import { BookOpen, FileText, Hand, Landmark, ShieldCheck, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, BookOpen, Coins, FileText, Hand, Landmark, PiggyBank, Receipt, ShieldCheck, Sparkles, type LucideIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useBank, type BankState, type Op } from '../store/useBank'
-import { Button, PageTitle, Sheet, TabPage } from '../ui/ui'
+import { Button, Header, PageTitle, Screen, Sheet, TabPage } from '../ui/ui'
 import { OpDetail, opAmounts, opIcon } from './opView'
 
 /**
- * «Сообщения» (US-16.1): every money movement + service messages, split into topics.
- * Tapping a message opens the message itself (a sheet), never another section.
+ * «Сообщения» (US-16.1, Kaspi-style since 2026-11-07): the tab lists topics vertically;
+ * a topic opens its own scroll of messages; tapping a message opens it in place (a sheet).
  */
-type Topic = 'all' | 'payments' | 'topups' | 'cashback' | 'gold' | 'bank'
-const TOPICS: { id: Topic; label: string }[] = [
-  { id: 'all', label: 'Все' },
-  { id: 'payments', label: 'Платежи' },
-  { id: 'topups', label: 'Пополнения' },
-  { id: 'cashback', label: 'Кешбэк' },
-  { id: 'gold', label: 'Золото и USDT' },
-  { id: 'bank', label: 'От банка' },
+type Topic = 'payments' | 'topups' | 'cashback' | 'gold' | 'savings' | 'bank'
+export const TOPICS: { id: Topic; label: string; icon: LucideIcon; tone: 'grey' | 'gold' | 'green' }[] = [
+  { id: 'payments', label: 'Платежи', icon: Receipt, tone: 'grey' },
+  { id: 'topups', label: 'Пополнения', icon: ArrowDownLeft, tone: 'green' },
+  { id: 'cashback', label: 'Кешбэк и бонусы', icon: Sparkles, tone: 'gold' },
+  { id: 'gold', label: 'Золото и USDT', icon: Coins, tone: 'gold' },
+  { id: 'savings', label: 'Сбережения', icon: PiggyBank, tone: 'green' },
+  { id: 'bank', label: 'GRAM · от банка', icon: Hand, tone: 'grey' },
 ]
 
 interface Msg {
   id: string
   at: number
-  topic: Exclude<Topic, 'all'>
+  topic: Topic
   icon: LucideIcon
   tone: 'grey' | 'gold' | 'green'
   title: string
@@ -35,7 +35,15 @@ interface Msg {
 const DAY = 86400000
 
 const opTopic = (o: Op): Msg['topic'] =>
-  o.type === 'purchase' ? 'payments' : o.type === 'topup' ? 'topups' : o.type === 'cashback' || o.type === 'bonus' ? 'cashback' : 'gold'
+  o.type === 'purchase'
+    ? 'payments'
+    : o.type === 'topup'
+      ? 'topups'
+      : o.type === 'cashback' || o.type === 'bonus'
+        ? 'cashback'
+        : o.type === 'interest' || o.type === 'transfer'
+          ? 'savings'
+          : 'gold'
 
 const opText = (o: Op) => {
   const [, second] = opAmounts(o)
@@ -43,6 +51,8 @@ const opText = (o: Op) => {
   if (o.type === 'topup') return 'Зачислено на карту GRAM'
   if (o.type === 'cashback') return o.asset === 'gold' ? 'Начислено золотом за покупку картой' : 'Вернули на карту за покупку'
   if (o.type === 'bonus') return o.title.replace('Бонус: ', '')
+  if (o.type === 'interest') return o.asset === 'gold' ? 'Начислено граммами по цене рынка' : 'Добавлено к сбережениям · 14% годовых'
+  if (o.type === 'transfer') return o.kzt < 0 ? 'С карты GRAM на сбережения' : 'Со сбережений на карту GRAM'
   if (o.receipt) return `По цене ${o.receipt.price.toLocaleString('ru-RU')} ₸ · внутри Рентген цены`
   return ''
 }
@@ -87,9 +97,11 @@ export function buildMessages(s: BankState): Msg[] {
   return out.sort((a, b) => b.at - a.at)
 }
 
+const isUnread = (s: BankState, m: Msg) => m.at > Math.max(s.messagesReadAt, s.topicReadAt?.[m.topic] ?? 0)
+
 export function useUnreadCount() {
   const s = useBank()
-  return useMemo(() => buildMessages(s).filter((m) => m.at > s.messagesReadAt).length, [s])
+  return useMemo(() => buildMessages(s).filter((m) => isUnread(s, m)).length, [s])
 }
 
 const when = (t: number) => {
@@ -97,53 +109,110 @@ const when = (t: number) => {
   const same = d.toDateString() === new Date().toDateString()
   return same ? d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
 }
+const dayLabel = (t: number) => {
+  const d = new Date(t)
+  if (d.toDateString() === new Date().toDateString()) return 'Сегодня'
+  if (d.toDateString() === new Date(Date.now() - 86400000).toDateString()) return 'Вчера'
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
+}
+const TONES = { grey: 'bg-surface text-ink', gold: 'bg-gold-soft text-[#7A4A00]', green: 'bg-mint text-[#00663F]' }
 
+/** «Сообщения» tab (Kaspi-style): one row per topic, newest first; a topic opens its own feed. */
 export function Messages() {
   const nav = useNavigate()
   const s = useBank()
-  const [topic, setTopic] = useState<Topic>('all')
-  const [open, setOpen] = useState<Msg | null>(null)
   const all = useMemo(() => buildMessages(s), [s])
-  const msgs = topic === 'all' ? all : all.filter((m) => m.topic === topic)
-  const readAt = useMemo(() => s.messagesReadAt, []) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const t = setTimeout(() => useBank.getState().markMessagesRead(), 800)
-    return () => clearTimeout(t)
-  }, [])
-  const tones = { grey: 'bg-white text-ink', gold: 'bg-gold-soft text-[#7A4A00]', green: 'bg-mint text-[#00663F]' }
-  const count = (t: Topic) => (t === 'all' ? all.length : all.filter((m) => m.topic === t).length)
+  const rows = TOPICS.map((t) => {
+    const msgs = all.filter((m) => m.topic === t.id)
+    return { ...t, last: msgs[0], unread: msgs.filter((m) => isUnread(s, m)).length }
+  }).sort((a, b) => (b.last?.at ?? 0) - (a.last?.at ?? 0))
 
   return (
     <TabPage>
       <PageTitle>Сообщения</PageTitle>
-      <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-3">
-        {TOPICS.map((t) => (
-          <button key={t.id} onClick={() => setTopic(t.id)} className={`h-9 shrink-0 rounded-full px-4 text-sm font-medium ${topic === t.id ? 'bg-ink text-white' : 'bg-surface text-ink'}`}>
-            {t.label} <span className={topic === t.id ? 'text-white/60' : 'text-ink-3'}>{count(t.id)}</span>
-          </button>
-        ))}
-      </div>
-      <div className="space-y-2 px-4">
-        {msgs.length === 0 && <div className="py-10 text-center text-sm text-ink-2">Здесь пока пусто</div>}
-        {msgs.map((m) => (
-          <button key={m.id} onClick={() => setOpen(m)} className="flex w-full items-start gap-3 rounded-2xl bg-surface p-4 text-left active:opacity-80">
-            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${tones[m.tone]}`}>
-              <m.icon size={20} strokeWidth={1.8} />
+      <div className="px-4">
+        {rows.map((t) => (
+          <button key={t.id} onClick={() => nav(`/messages/${t.id}`)} className="flex w-full items-center gap-3 border-b border-line py-3 text-left last:border-0 active:opacity-80">
+            <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ${TONES[t.tone]}`}>
+              <t.icon size={22} strokeWidth={1.8} />
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-2">
-                <div className="truncate text-[15px] font-semibold">{m.title}</div>
-                {m.amount && <div className={`num shrink-0 text-[15px] font-semibold ${m.amount.startsWith('+') ? 'text-[#00663F]' : ''}`}>{m.amount}</div>}
+                <div className="truncate text-[16px] font-semibold">{t.label}</div>
+                {t.last && <span className="shrink-0 text-xs text-ink-3">{when(t.last.at)}</span>}
               </div>
-              <div className="mt-0.5 flex items-baseline justify-between gap-2">
-                <p className="line-clamp-2 text-[13px] leading-snug text-ink-2">{m.text}</p>
-                <span className="flex shrink-0 items-center gap-1.5 text-xs text-ink-3">
-                  {m.at > readAt && <span className="h-2 w-2 rounded-full bg-err" aria-label="Новое" />}
-                  {when(m.at)}
-                </span>
+              <div className="mt-0.5 flex items-center justify-between gap-2">
+                <p className="truncate text-[13px] text-ink-2">{t.last ? `${t.last.title}${t.last.amount ? ` · ${t.last.amount}` : ''}` : 'Пока нет сообщений'}</p>
+                {t.unread > 0 && <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-err px-1.5 text-[11px] font-bold text-white">{t.unread}</span>}
               </div>
             </div>
           </button>
+        ))}
+      </div>
+    </TabPage>
+  )
+}
+
+/** One topic's feed: scroll of its messages by day; tapping opens the message itself in a sheet. */
+export function MessageTopic() {
+  const nav = useNavigate()
+  const { topic } = useParams()
+  const s = useBank()
+  const t = TOPICS.find((x) => x.id === topic) ?? TOPICS[0]
+  const [open, setOpen] = useState<Msg | null>(null)
+  const msgs = useMemo(() => buildMessages(s).filter((m) => m.topic === t.id), [s, t.id])
+  // capture the read mark on entry so new ones keep their dot while you look
+  const readAt = useMemo(() => Math.max(s.messagesReadAt, s.topicReadAt?.[t.id] ?? 0), [t.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const id = setTimeout(() => useBank.getState().markTopicRead(t.id), 800)
+    return () => clearTimeout(id)
+  }, [t.id])
+  const groups: [string, Msg[]][] = []
+  for (const m of msgs) {
+    const k = dayLabel(m.at)
+    const g = groups.find((x) => x[0] === k)
+    if (g) g[1].push(m)
+    else groups.push([k, [m]])
+  }
+
+  return (
+    <Screen>
+      <Header title={t.label} />
+      <div className="px-4 pb-8">
+        {msgs.length === 0 && (
+          <div className="flex flex-col items-center py-16 text-center">
+            <span className={`grid h-14 w-14 place-items-center rounded-full ${TONES[t.tone]}`}>
+              <t.icon size={24} strokeWidth={1.8} />
+            </span>
+            <p className="mt-3 text-sm text-ink-2">Здесь пока пусто. Сообщения появятся после первой операции.</p>
+          </div>
+        )}
+        {groups.map(([day, list]) => (
+          <div key={day}>
+            <div className="pb-2 pt-4 text-[13px] font-semibold text-ink-2">{day}</div>
+            <div className="space-y-2">
+              {list.map((m) => (
+                <button key={m.id} onClick={() => setOpen(m)} className="flex w-full items-start gap-3 rounded-2xl bg-surface p-4 text-left active:opacity-80">
+                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${TONES[m.tone]} ${m.tone === 'grey' ? '!bg-white' : ''}`}>
+                    <m.icon size={20} strokeWidth={1.8} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <div className="truncate text-[15px] font-semibold">{m.title}</div>
+                      {m.amount && <div className={`num shrink-0 text-[15px] font-semibold ${m.amount.startsWith('+') ? 'text-[#00663F]' : ''}`}>{m.amount}</div>}
+                    </div>
+                    <div className="mt-0.5 flex items-baseline justify-between gap-2">
+                      <p className="line-clamp-2 text-[13px] leading-snug text-ink-2">{m.text}</p>
+                      <span className="flex shrink-0 items-center gap-1.5 text-xs text-ink-3">
+                        {m.at > readAt && <span className="h-2 w-2 rounded-full bg-err" aria-label="Новое" />}
+                        {when(m.at)}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
 
@@ -154,7 +223,7 @@ export function Messages() {
           open && (
             <div>
               <div className="flex items-center gap-3">
-                <span className={`grid h-12 w-12 place-items-center rounded-full ${tones[open.tone]} ${open.tone === 'grey' ? '!bg-surface' : ''}`}>
+                <span className={`grid h-12 w-12 place-items-center rounded-full ${TONES[open.tone]}`}>
                   <open.icon size={22} strokeWidth={1.8} />
                 </span>
                 <div>
@@ -182,6 +251,6 @@ export function Messages() {
           )
         )}
       </Sheet>
-    </TabPage>
+    </Screen>
   )
 }

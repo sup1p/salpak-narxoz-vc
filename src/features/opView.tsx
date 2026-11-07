@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, Bus, Coins, Gift, GraduationCap, Home as HomeIcon, QrCode, Repeat, Smartphone, Sparkles, Wifi, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Bus, Coins, Gift, GraduationCap, Home as HomeIcon, PiggyBank, QrCode, Repeat, Smartphone, Sparkles, Wifi, type LucideIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { formatKzt, formatNum } from '../domain/money'
 import { useBank, type Op } from '../store/useBank'
@@ -12,6 +12,8 @@ export function opIcon(o: Op): { icon: LucideIcon; tone: 'grey' | 'gold' | 'gree
   if (o.type === 'purchase') return { icon: CATEGORY_ICON[o.category ?? 'qr'] ?? QrCode, tone: 'grey' }
   if (o.type === 'topup') return { icon: ArrowDownLeft, tone: 'green' }
   if (o.type === 'cashback') return { icon: Sparkles, tone: 'gold' }
+  if (o.type === 'interest') return { icon: PiggyBank, tone: o.asset === 'gold' ? 'gold' : 'green' }
+  if (o.type === 'transfer') return { icon: ArrowLeftRight, tone: 'grey' }
   if (o.type === 'bonus' || o.type === 'gift_out') return { icon: Gift, tone: 'green' }
   if (o.asset === 'usdt') return { icon: Repeat, tone: 'grey' }
   if (o.type === 'sell') return { icon: ArrowUpRight, tone: 'grey' }
@@ -40,6 +42,8 @@ export const OP_TYPE: Record<Op['type'], string> = {
   cashback: 'Кешбэк',
   bonus: 'Бонус за друга',
   gift_out: 'Подарок',
+  interest: 'Вознаграждение по сбережениям',
+  transfer: 'Перевод между своими счетами',
 }
 
 /** Full details of one operation — what a bank shows when you open a notification. */
@@ -78,6 +82,9 @@ export function OpDetail({ op, onClose }: { op: Op; onClose: () => void }) {
         {op.type === 'purchase' && <Row label="Кешбэк" value={op.cbGrams ? `+${formatNum(op.cbGrams, 4)} г золота` : op.cbKzt ? `+${formatKzt(op.cbKzt, 0)}` : 'Не начислен (лимит)'} />}
         {parent && <Row label="За платёж" value={`${parent.title.split(' · ')[0]} · ${formatKzt(-parent.kzt, 0)}`} />}
         {op.type === 'bonus' && <Row label="Налог" value="Удержит банк (гипотеза)" />}
+        {op.type === 'transfer' && <Row label="Откуда → куда" value={op.kzt < 0 ? 'Карта → Сбережения' : 'Сбережения → Карта'} />}
+        {op.type === 'interest' && <Row label="Начислено на" value={op.asset === 'gold' ? 'Золото (граммы по цене рынка)' : 'Сбережения в ₸'} />}
+        {op.type === 'interest' && <Row label="Ставка" value="14% годовых (тест)" />}
         <Row label="Статус" value="Успешно" />
       </div>
 
@@ -93,6 +100,11 @@ export function OpDetail({ op, onClose }: { op: Op; onClose: () => void }) {
         {(op.type === 'buy' || op.type === 'sell') && op.asset !== 'usdt' && (
           <Button variant="secondary" onClick={() => go('/gold')}>
             Открыть золото
+          </Button>
+        )}
+        {(op.type === 'interest' || op.type === 'transfer') && (
+          <Button variant="secondary" onClick={() => go('/savings')}>
+            Открыть сбережения
           </Button>
         )}
         {op.type === 'cashback' && (

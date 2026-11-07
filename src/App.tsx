@@ -13,12 +13,13 @@ import { RiskTest } from './features/riskTest'
 import { Metrics } from './features/metrics'
 import { Operations } from './features/operations'
 import { Services } from './features/services'
-import { Messages, useUnreadCount } from './features/messages'
+import { MessageTopic, Messages, useUnreadCount } from './features/messages'
 import { More, Security, Documents, Support } from './features/more'
 import { Tour } from './features/tour'
 import { OtherBanks, TopUp } from './features/banks'
 import { PayRoute, Payments } from './features/payments'
 import { Scan } from './features/scan'
+import { Savings } from './features/savings'
 
 /** Bottom bar (DESIGN-SYSTEM §14.2): Главная · Платежи · Сервисы · Сообщения · Ещё — like Kaspi/Freedom. */
 export const TABS = [
@@ -80,6 +81,8 @@ function Shell() {
     const days = (Date.now() - st.installedAt) / 86400000
     if (days >= 1) st.track('return_d1')
     if (days >= 7) st.track('return_d7')
+    // savings reward for the days the app was closed (CONCEPT §5.15)
+    st.accrueSavings()
   }, [])
   return (
     <div className="flex min-h-full items-center justify-center sm:py-6">
@@ -94,6 +97,7 @@ function Shell() {
             <Route path="/operations" element={<Guard><Operations /></Guard>} />
             <Route path="/services" element={<Guard><Services /></Guard>} />
             <Route path="/messages" element={<Guard><Messages /></Guard>} />
+            <Route path="/messages/:topic" element={<Guard><MessageTopic /></Guard>} />
             <Route path="/more" element={<Guard><More /></Guard>} />
             {/* inner pages */}
             <Route path="/gold" element={<Guard><Gold /></Guard>} />
@@ -118,6 +122,7 @@ function Shell() {
             <Route path="/payments" element={<Guard><Payments /></Guard>} />
             <Route path="/payments/:id" element={<Guard><PayRoute /></Guard>} />
             <Route path="/scan" element={<Guard><Scan /></Guard>} />
+            <Route path="/savings" element={<Guard><Savings /></Guard>} />
             {/* old paths */}
             <Route path="/profile" element={<Navigate to="/more" replace />} />
             <Route path="/history" element={<Navigate to="/operations" replace />} />

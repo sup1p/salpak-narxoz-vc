@@ -1,10 +1,11 @@
-import { Check, X } from 'lucide-react'
+import { Check, ChevronRight, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { LESSONS, MARKET_PRICE, type QuizQ } from '../data/seed'
 import { formatKzt, formatNum } from '../domain/money'
 import { overpayKzt, quoteBuy } from '../domain/pricing'
 import { useBank } from '../store/useBank'
+import { LessonWidget } from './academyWidgets'
 import { Badge, Button, Card, Header, Screen } from '../ui/ui'
 
 export function Academy() {
@@ -14,7 +15,7 @@ export function Academy() {
   return (
     <div className="px-5 pb-28 pt-6">
       <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em]">Академия</h1>
-      <p className="mt-1 text-sm text-ink-2">Короткие уроки по 2 минуты. Учимся ради себя — без призов и баллов.</p>
+      <p className="mt-1 text-sm text-ink-2">{LESSONS.length} коротких уроков: теория, интерактив и квиз. Учимся ради себя — без призов и баллов.</p>
       <div className="mt-4 bg-ink p-5 text-white">
         <div className="text-xs text-white/60">Финансовая прокачка</div>
         <div className="num mt-1 text-3xl font-bold">
@@ -29,25 +30,37 @@ export function Academy() {
           Учимся ради себя: уроки ничего не открывают и ничем не награждаются.
         </div>
       </div>
-      <div className="mt-4 space-y-2 pb-4">
-        {LESSONS.map((l, i) => (
-          <Card key={l.id} className="flex items-center justify-between" onClick={() => nav(`/academy/${l.id}`)}>
-            <div className="flex items-center gap-3">
-              <span className="num grid h-8 w-8 place-items-center rounded-full bg-white text-sm font-bold">{i + 1}</span>
-              <div>
-                <div className="font-semibold">{l.title}</div>
-                <div className="text-xs text-ink-2">{l.minutes} мин + квиз</div>
-              </div>
-            </div>
-            {done.includes(l.id) && <Check className="text-ok" />}
-          </Card>
-        ))}
-      </div>
+      {(['Золото', 'Деньги', 'Налоги', 'Безопасность'] as const).map((topic) => (
+        <div key={topic}>
+          <h2 className="pb-2 pt-6 text-[19px] font-bold tracking-[-0.02em]">{topic}</h2>
+          <div className="space-y-2">
+            {LESSONS.filter((l) => l.topic === topic).map((l) => (
+              <Card key={l.id} className="flex items-center justify-between gap-3" onClick={() => nav(`/academy/${l.id}`)}>
+                <div className="min-w-0">
+                  <div className="font-semibold">{l.title}</div>
+                  <div className="mt-0.5 text-[13px] text-ink-2">{l.summary}</div>
+                  <div className="mt-1 text-xs text-ink-3">
+                    {l.minutes} мин · {l.pages.length} страницы · интерактив и квиз
+                  </div>
+                </div>
+                {done.includes(l.id) ? <Check className="shrink-0 text-ok" aria-label="Пройден" /> : <ChevronRight size={18} className="shrink-0 text-ink-3" />}
+              </Card>
+            ))}
+          </div>
+        </div>
+      ))}
+      <div className="pb-4" />
     </div>
   )
 }
 
+/** New lesson = fresh page index and quiz state (the route stays mounted between lessons). */
 export function LessonScreen() {
+  const { id } = useParams()
+  return <Lesson key={id} />
+}
+
+function Lesson() {
   const { id } = useParams()
   const nav = useNavigate()
   const lesson = LESSONS.find((l) => l.id === id)
@@ -62,6 +75,7 @@ export function LessonScreen() {
     const r = own && s.lastReceipt ? s.lastReceipt : quoteBuy(10000, MARKET_PRICE, 0)
     const ok = overpayKzt(r)
     return [
+      ...(lesson?.quiz ?? []),
       {
         q: own
           ? `По твоему последнему чеку: ты купил(а) золото на ${formatKzt(r.amountKzt, 0)}. Сколько ты заплатил(а) сверх рыночной цены?`
@@ -82,10 +96,12 @@ export function LessonScreen() {
     )
   }
 
-  const inQuiz = card >= lesson.cards.length
+  const pages = lesson.pages
+  const inQuiz = card >= pages.length
   const q = quiz[qi]
   const right = !!q && picked === q.correct
-  const steps = lesson.cards.length + quiz.length
+  const steps = pages.length + quiz.length
+  const page = pages[Math.min(card, pages.length - 1)]
 
   const next = () => {
     if (!right) return setPicked(null)
@@ -109,14 +125,33 @@ export function LessonScreen() {
         </div>
         {!inQuiz || !q ? (
           <>
-            <div className="mt-6 self-start">
+            <div className="mt-5 self-start">
               <Badge tone="gold">
-                Карточка {Math.min(card + 1, lesson.cards.length)} из {lesson.cards.length}
+                {Math.min(card + 1, pages.length)} из {pages.length}
               </Badge>
             </div>
-            <p className="mt-5 text-xl font-medium leading-snug">{lesson.cards[Math.min(card, lesson.cards.length - 1)]}</p>
-            <div className="mt-auto pb-6">
-              <Button onClick={() => setCard(card + 1)}>{card === lesson.cards.length - 1 ? 'Проверить себя' : 'Дальше'}</Button>
+            {page.image && <img src={page.image} alt="" className="mt-4 h-44 w-full rounded-2xl bg-white object-contain" />}
+            <h2 className="mt-4 text-[22px] font-bold leading-tight tracking-[-0.02em]">{page.title}</h2>
+            <div className="mt-3 space-y-3">
+              {page.text.map((t) => (
+                <p key={t} className="text-[16px] leading-relaxed text-ink">
+                  {t}
+                </p>
+              ))}
+            </div>
+            {page.widget && <LessonWidget key={page.widget} w={page.widget} />}
+            {page.tip && <p className="mt-4 rounded-[16px] bg-gold-soft p-4 text-sm font-medium">Запомни: {page.tip}</p>}
+            <div className="mt-auto pb-6 pt-6">
+              <div className="grid grid-cols-[auto_1fr] gap-2">
+                {card > 0 && (
+                  <Button variant="secondary" className="!w-auto px-5" onClick={() => setCard(card - 1)}>
+                    Назад
+                  </Button>
+                )}
+                <Button className={card > 0 ? '' : 'col-span-2'} onClick={() => setCard(card + 1)}>
+                  {card === pages.length - 1 ? 'Проверить себя' : 'Дальше'}
+                </Button>
+              </div>
             </div>
           </>
         ) : (
