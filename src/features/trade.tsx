@@ -159,7 +159,7 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
         title={`${buy ? 'Купить' : 'Продать'} ${what}`}
         right={
           sandbox ? (
-            <Sticker bg="#D2EEE5" rotate={4} className="text-[11px]">
+            <Sticker bg="#C4F0DE" rotate={4} className="text-[11px]">
               Проба
             </Sticker>
           ) : undefined
