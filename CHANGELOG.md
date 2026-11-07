@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.10.1] — 2026-11-07
+
 ### Added
 - Impeccable (pbakaus/impeccable) как обязательный стандарт UI: скилл в `.claude/skills/impeccable`, продуктовый контекст `PRODUCT.md` (DESIGN-SYSTEM §15).
 
