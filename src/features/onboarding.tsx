@@ -27,10 +27,10 @@ export function Intro() {
         <motion.div className="absolute right-6 top-0" animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 4 }}>
           <Nugget size={84} />
         </motion.div>
-        <Sticker className="absolute right-4 top-[120px]" bg="#C6F432" rotate={8}>
+        <Sticker className="absolute right-4 top-[120px]" bg="#00AB75" rotate={8}>
           999,9
         </Sticker>
-        <Sticker className="absolute left-[46%] top-[60px]" bg="#FF7AD9" rotate={-10}>
+        <Sticker className="absolute left-[46%] top-[60px]" bg="#D2EEE5" rotate={-10}>
           от 1000 ₸
         </Sticker>
         <Sticker className="absolute left-4 top-[250px]" bg="#fff" rotate={-4}>
@@ -43,7 +43,7 @@ export function Intro() {
 
       <AnimatePresence mode="wait">
         <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="mt-auto">
-          <h1 className="whitespace-pre-line font-display text-[46px] font-bold uppercase leading-[0.95] text-white drop-shadow-[0_2px_0_rgba(11,11,15,.25)]">
+          <h1 className="whitespace-pre-line font-display text-[46px] font-bold uppercase leading-[0.95] text-white drop-shadow-[0_2px_0_rgba(20,21,24,.25)]">
             {SLIDES[i].title}
           </h1>
           <p className="mt-3 text-base text-ink/80">{SLIDES[i].text}</p>
@@ -150,7 +150,7 @@ export function RiskQuiz() {
     <Screen>
       <Header title={`Честно о рисках · ${i + 1}/3`} />
       <div className="px-5">
-        <Sticker bg="#FFE9A6" rotate={-3}>
+        <Sticker bg="#F6E7D3" rotate={-3}>
           3 вопроса до старта
         </Sticker>
         <h1 className="mt-5 text-[28px] font-bold leading-tight">{q.q}</h1>
@@ -183,7 +183,7 @@ export function TopUp() {
   const [done, setDone] = useState(false)
   return (
     <div className="sky flex min-h-full flex-col px-5 pb-10 pt-16">
-      <h1 className="font-display text-[44px] font-bold uppercase leading-[0.95] text-white drop-shadow-[0_2px_0_rgba(11,11,15,.25)]">
+      <h1 className="font-display text-[44px] font-bold uppercase leading-[0.95] text-white drop-shadow-[0_2px_0_rgba(20,21,24,.25)]">
         Тестовый
         <br />
         баланс готов

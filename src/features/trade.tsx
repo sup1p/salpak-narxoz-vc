@@ -139,7 +139,7 @@ export function TradeFlow({ side }: { side: Side }) {
         title={buy ? 'Купить золото' : 'Продать золото'}
         right={
           sandbox ? (
-            <Sticker bg="#FF7AD9" rotate={4} className="text-[11px]">
+            <Sticker bg="#D2EEE5" rotate={4} className="text-[11px]">
               Проба
             </Sticker>
           ) : undefined
@@ -148,7 +148,7 @@ export function TradeFlow({ side }: { side: Side }) {
 
       {step === 'input' && (
         <div className="flex flex-1 flex-col px-5">
-          {sandbox && <p className="mb-3 rounded-2xl bg-pink/20 p-3 text-sm">Режим Пробы: виртуальные {formatKzt(s.sandbox.cardKzt, 0)}. Реальные балансы не меняются.</p>}
+          {sandbox && <p className="mb-3 rounded-2xl bg-mint p-3 text-sm">Режим Пробы: виртуальные {formatKzt(s.sandbox.cardKzt, 0)}. Реальные балансы не меняются.</p>}
           <div className="text-sm text-ink-2">{buy ? 'Сумма в тенге' : 'Сколько граммов продать'}</div>
           <div className="mt-2 flex items-baseline gap-2">
             <input

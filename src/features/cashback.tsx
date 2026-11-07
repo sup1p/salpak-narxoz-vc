@@ -93,7 +93,7 @@ export function Cashback() {
                 <div className="text-xs text-ink-2">{st.cond}</div>
                 <div className="text-xs text-ink-3">анимация: {st.look}</div>
               </div>
-              <Sticker bg={status === st.id ? '#F5B700' : '#fff'} rotate={-4}>
+              <Sticker bg={status === st.id ? '#DCA86E' : '#fff'} rotate={-4}>
                 {CASHBACK_RATE[st.id] * 100}%
               </Sticker>
             </Card>

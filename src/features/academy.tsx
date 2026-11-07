@@ -98,7 +98,7 @@ export function LessonScreen() {
         </div>
         {!inQuiz ? (
           <>
-            <Sticker bg="#FFE9A6" rotate={-3} className="mt-6 self-start">
+            <Sticker bg="#F6E7D3" rotate={-3} className="mt-6 self-start">
               {card + 1} / {lesson.cards.length}
             </Sticker>
             <p className="mt-5 text-xl font-medium leading-snug">{lesson.cards[card]}</p>
@@ -108,7 +108,7 @@ export function LessonScreen() {
           </>
         ) : (
           <>
-            <Sticker bg="#C6F432" rotate={-3} className="mt-6 self-start">
+            <Sticker bg="#00AB75" rotate={-3} className="mt-6 self-start">
               квиз
             </Sticker>
             <h2 className="mt-4 text-xl font-bold leading-snug">{quiz.q}</h2>

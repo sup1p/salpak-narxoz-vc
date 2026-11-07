@@ -140,10 +140,10 @@ export function InviteGift() {
       <div className="px-5">
         <div className="relative h-40">
           <Nugget size={90} className="absolute left-4 top-2" />
-          <Sticker className="absolute right-6 top-6" bg="#FF7AD9" rotate={8}>
+          <Sticker className="absolute right-6 top-6" bg="#D2EEE5" rotate={8}>
             0,01 г другу
           </Sticker>
-          <Sticker className="absolute right-16 top-24" bg="#C6F432" rotate={-6}>
+          <Sticker className="absolute right-16 top-24" bg="#00AB75" rotate={-6}>
             +0,05 г обоим
           </Sticker>
         </div>
@@ -195,7 +195,7 @@ export function GiftReceived() {
       <motion.div className="my-8" initial={{ scale: 0.7, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring' }}>
         <GoldCapsule grams={0.06} height={200} />
       </motion.div>
-      <h1 className="font-display text-[44px] font-bold uppercase leading-[0.95] text-white drop-shadow-[0_2px_0_rgba(11,11,15,.25)]">0,01 г золота — твои</h1>
+      <h1 className="font-display text-[44px] font-bold uppercase leading-[0.95] text-white drop-shadow-[0_2px_0_rgba(20,21,24,.25)]">0,01 г золота — твои</h1>
       <p className="mt-3 text-ink/80">Настоящая доля в слитке пробы 999,9. Забери после регистрации — это 2 минуты.</p>
       <div className="mt-auto w-full">
         <Button onClick={() => nav(-1)}>Забрать подарок</Button>
