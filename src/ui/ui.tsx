@@ -236,3 +236,8 @@ export function Balance({ value, unit = '₸', digits = 2, className = '' }: { v
     </div>
   )
 }
+
+/** GRAM logo (DESIGN-SYSTEM §14.1): green «G» with a gold-bar cut-out. */
+export function Logo({ size = 32, className = '' }: { size?: number; className?: string }) {
+  return <img src="/logo.svg" alt="GRAM" width={size} height={size} className={`shrink-0 ${className}`} />
+}

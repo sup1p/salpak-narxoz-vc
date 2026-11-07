@@ -25,7 +25,7 @@ export function More() {
       <PageTitle>Ещё</PageTitle>
       <div className="px-4">
         <div className="flex items-center gap-3 rounded-2xl bg-surface p-4">
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gold text-lg font-bold">А</span>
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#D5D6DB] text-lg font-semibold text-[#4A4D55]">А</span>
           <div className="min-w-0 flex-1">
             <div className="text-[17px] font-semibold">Айгерим</div>
             <div className="text-[13px] text-ink-2">+7 701 ••• 45 67 · тестовый профиль</div>
