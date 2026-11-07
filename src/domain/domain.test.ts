@@ -55,3 +55,23 @@ describe('loyalty', () => {
     expect(cashbackGrams(1500, 'bar', M, 0)).toBeCloseTo(30 / M, 8)
   })
 })
+
+describe('usdt and regularity', () => {
+  it('quotes USDT with 2-decimal units', () => {
+    const r = quoteBuy(10000, 520, 0, 'usdt')
+    expect(r.asset).toBe('usdt')
+    expect(r.price).toBe(522.6)
+    expect(r.grams).toBe(19.04)
+    expect(quoteSell(10, 520, 0, 'usdt').totalKzt).toBe(5124)
+  })
+  it('counts consecutive top-up months', async () => {
+    const { regularStreak } = await import('./loyalty')
+    const now = new Date(2026, 10, 7).getTime()
+    expect(regularStreak(['2026-11', '2026-10'], now)).toBe(2)
+    expect(regularStreak(['2026-11', '2026-09'], now)).toBe(1)
+    expect(regularStreak([], now)).toBe(0)
+  })
+  it('includes bank-held USDT in the portfolio', () => {
+    expect(portfolioKzt({ cardKzt: 0, savingsKzt: 0, gold: 0, usdt: 10 }, 54800, 520)).toBe(5200)
+  })
+})
