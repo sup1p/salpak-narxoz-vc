@@ -76,6 +76,7 @@ export interface BankState {
   invites: Invite[]
   events: Evt[]
   installedAt: number
+  messagesReadAt: number
   history: Op[]
   lastReceipt?: Receipt
   usedQuoteIds: string[]
@@ -100,6 +101,7 @@ interface Actions {
   simulateFriendPurchase(name: string): void
   track(name: EventName, at?: number): void
   simulateReturn(days: number): void
+  markMessagesRead(): void
   reset(): void
 }
 
@@ -133,6 +135,7 @@ const fresh = (): BankState => {
     invites: [],
     events: [{ name: 'install', at: now }],
     installedAt: now,
+    messagesReadAt: 0,
     history: [{ id: 'seed-cb', type: 'cashback', title: 'Кешбэк за прошлые покупки', kzt: 0, grams: INITIAL.gold, at: now - 86400000 * 3 }],
     usedQuoteIds: [],
   }
@@ -325,6 +328,7 @@ export const useBank = create<BankState & Actions>()(
         get().track(days >= 7 ? 'return_d7' : 'return_d1', s.installedAt + days * 86400000)
       },
 
+      markMessagesRead: () => set({ messagesReadAt: Date.now() }),
       reset: () => set(fresh()),
     }),
     {
