@@ -209,7 +209,7 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
         <div className="flex flex-1 flex-col px-5">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[24px] font-extrabold lowercase tracking-[-0.03em]">цена на 30 секунд</div>
+              <div className="text-[22px] font-bold tracking-[-0.02em]">Цена на 30 секунд</div>
               <div className="text-sm text-ink-2">Заплатишь ровно то, что видишь</div>
             </div>
             <TimerRing left={left} />
@@ -268,7 +268,7 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
               <GoldCapsule grams={sandbox ? s.sandbox.gold : s.gold} height={170} pulse={pulse} />
             </motion.div>
           )}
-          <h1 className="mt-5 font-display text-[36px] font-bold leading-none">{buy ? `+${fu(asset, r.grams)}` : `+${formatKzt(r.totalKzt)}`}</h1>
+          <h1 className="mt-5 text-[32px] font-bold leading-none tracking-[-0.02em]">{buy ? `+${fu(asset, r.grams)}` : `+${formatKzt(r.totalKzt)}`}</h1>
           <p className="mt-2 text-ink-2">{buy ? (sandbox ? 'Это была проба — реальные деньги не тронуты.' : isGold ? 'Золото уже в твоей копилке.' : 'USDT зачислены на счёт в Altyn.') : 'Деньги уже на карте.'}</p>
           <Card className="mt-5 w-full text-left">
             <div className="mb-1 text-sm font-semibold">Чек · Из чего цена</div>

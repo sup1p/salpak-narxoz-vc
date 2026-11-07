@@ -24,7 +24,7 @@ export function Cashback() {
     <Screen>
       <Header title="Кешбэк" />
       <div className="px-5">
-        <h1 className="font-display text-[34px] font-bold uppercase leading-none">Кешбэк в ₸ или в граммах?</h1>
+        <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em]">Кешбэк в тенге или в граммах?</h1>
         <p className="mt-2 text-sm text-ink-2">Кешбэк начисляется только за покупки картой — не на остаток.</p>
 
         <div className="mt-5 overflow-hidden rounded-[24px] border border-line text-sm">
@@ -51,7 +51,7 @@ export function Cashback() {
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={`h-12 rounded-[2px] text-[12px] font-semibold uppercase tracking-[.1em] ${mode === m ? (m === 'gold' ? 'bg-gold text-ink' : 'bg-ink text-white') : 'ring-1 ring-inset ring-line'}`}
+              className={`h-12 rounded-xl text-[15px] font-semibold ${mode === m ? (m === 'gold' ? 'bg-gold text-ink' : 'bg-ink text-white') : 'bg-surface text-ink'}`}
             >
               {m === 'gold' ? 'В золоте' : 'В тенге'}
             </button>

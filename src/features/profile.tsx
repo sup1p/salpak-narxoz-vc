@@ -1,80 +1,12 @@
 import { motion } from 'framer-motion'
-import { AlertTriangle, ArrowLeftRight, BarChart3, ChevronRight, Download, FileText, Gift, History as HistoryIcon, Link2, Lock, RotateCcw, Sparkles, Unlock } from 'lucide-react'
+import { AlertTriangle, Download, Lock, Unlock } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CONTACTS, LESSONS, PARTNER, USDT_KZT } from '../data/seed'
 import { formatGrams, formatKzt, formatNum } from '../domain/money'
-import { FRIEND_BONUS_G, hasRealBuy, selectLevel, selectStatus, useBank, type Level } from '../store/useBank'
-import { STATUS_LABEL } from '../domain/loyalty'
-import { GoldCapsule, Nugget, Sticker } from '../ui/gold'
-import { Button, Card, Header, Row, Screen, TestBadge } from '../ui/ui'
-
-function Item({ icon: Icon, title, sub, to }: { icon: typeof Gift; title: string; sub?: string; to: string }) {
-  const nav = useNavigate()
-  return (
-    // §12: Gold Apple-style menu — big lowercase items, thin dividers, no cards
-    <button onClick={() => nav(to)} className="flex w-full items-center justify-between border-b border-line py-3.5 text-left">
-      <div className="flex items-center gap-3">
-        <Icon size={20} strokeWidth={1.7} className="text-ink-2" />
-        <div>
-          <div className="text-[19px] font-bold lowercase tracking-[-0.02em]">{title}</div>
-          {sub && <div className="text-xs text-ink-3">{sub}</div>}
-        </div>
-      </div>
-      <ChevronRight size={18} className="text-ink-3" />
-    </button>
-  )
-}
-
-export function Profile() {
-  const s = useBank()
-  const status = selectStatus(s)
-  const level = selectLevel(s)
-  const nav = useNavigate()
-  return (
-    <div className="px-5 pb-28 pt-6">
-      <div className="flex items-center gap-3">
-        <div className="grid h-14 w-14 place-items-center rounded-full bg-gold text-xl font-bold">А</div>
-        <div>
-          <div className="text-lg font-bold">Айгерим</div>
-          <div className="text-xs text-ink-2">Тестовый профиль · статус «{STATUS_LABEL[status]}»</div>
-        </div>
-      </div>
-      <div className="mt-5">
-        <Item icon={Sparkles} title="Кешбэк и Золотой дождь" sub={s.cashbackMode === 'gold' ? 'Сейчас: в золоте' : 'Сейчас: в ₸'} to="/cashback" />
-        <Item icon={FileText} title="Налоги и декларация" sub="Готовность к декларации" to="/tax" />
-        <Item icon={Gift} title="Позови подарком" sub="Подари другу 0,01 г" to="/invite" />
-        <Item icon={Unlock} title="Уровни" sub={{ start: 'Старт', saver: 'Копилка', investor: 'Инвестор' }[level]} to="/levels" />
-        <Item icon={Link2} title="Партнёры МФЦА" sub={level === 'investor' ? (s.partnerConnected ? 'Подключён · только просмотр' : 'Подключить кошелёк') : 'Откроется на уровне «Инвестор»'} to={level === 'investor' ? '/partner' : '/levels'} />
-        <Item icon={ArrowLeftRight} title="Обмен ₸ ↔ USDT" sub={level === 'investor' ? (s.usdt > 0 ? `${formatNum(s.usdt, 2)} USDT` : 'По котировке, как золото') : 'Откроется на уровне «Инвестор»'} to={level === 'investor' ? '/otc' : '/levels'} />
-        <Item icon={BarChart3} title="Метрики гипотезы" sub="Активация, первая покупка, кешбэк, возвраты" to="/metrics" />
-        <Item icon={HistoryIcon} title="История операций" to="/history" />
-      </div>
-
-      <div className="mt-6 text-xs font-semibold uppercase tracking-wider text-ink-3">Демо-панель</div>
-      <Card className="mt-2 space-y-3">
-        <div className="text-sm">Статус для демо «Золотого дождя»</div>
-        <div className="grid grid-cols-3 gap-2 text-xs">
-          <button className="h-10 rounded-[2px] bg-white font-semibold ring-1 ring-inset ring-line" onClick={() => { s.setRegularMonths(0) }}>
-            как есть
-          </button>
-          <button className="h-10 rounded-[2px] bg-white font-semibold ring-1 ring-inset ring-line" onClick={() => { if (s.cardKzt + s.savingsKzt < 100000) s.topUp(100000 - s.cardKzt - s.savingsKzt) }}>
-            → Самородок
-          </button>
-          <button className="h-10 rounded-[2px] bg-white font-semibold ring-1 ring-inset ring-line" onClick={() => { s.topUp(Math.max(0, 500000 - s.cardKzt - s.savingsKzt)); s.setRegularMonths(2) }}>
-            → Слиток
-          </button>
-        </div>
-        <button onClick={() => { s.reset(); nav('/welcome') }} className="flex h-10 w-full items-center justify-center gap-2 rounded-[2px] bg-white text-sm font-semibold ring-1 ring-inset ring-line">
-          <RotateCcw size={16} /> Сбросить демо
-        </button>
-      </Card>
-      <div className="mt-4 mb-4">
-        <TestBadge />
-      </div>
-    </div>
-  )
-}
+import { FRIEND_BONUS_G, hasRealBuy, selectLevel, useBank, type Level } from '../store/useBank'
+import { GoldCapsule } from '../ui/gold'
+import { Badge, Button, Card, Header, Row, Screen } from '../ui/ui'
 
 export function TaxReadiness() {
   const s = useBank()
@@ -105,7 +37,7 @@ export function TaxReadiness() {
     <Screen>
       <Header title="Налоги и декларация" />
       <div className="px-5">
-        <h1 className="font-display text-[34px] font-bold uppercase leading-none">Первая декларация? Подготовим.</h1>
+        <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em]">Первая декларация? Подготовим за тебя</h1>
         <p className="mt-2 text-sm text-ink-2">Золото — это актив. Мы говорим об этом заранее, а не постфактум, и собираем данные за тебя.</p>
         <div className="mt-4 bg-ink p-5 text-white">
           <div className="text-xs text-white/60">Срок подачи</div>
@@ -146,17 +78,16 @@ export function InviteGift() {
     <Screen>
       <Header title="Позови подарком" />
       <div className="px-5">
-        <div className="relative h-40">
-          <Nugget size={90} className="absolute left-4 top-2" />
-          <Sticker className="absolute right-6 top-6" bg="#D2EEE5" rotate={8}>
-            0,01 г другу
-          </Sticker>
-          <Sticker className="absolute right-16 top-24" bg="#00AB75" rotate={-6}>
-            +0,05 г обоим
-          </Sticker>
+        <div className="flex items-center justify-between rounded-2xl bg-surface p-4">
+          <div className="flex flex-col gap-2">
+            <Badge tone="gold">0,01 г другу</Badge>
+            <Badge tone="green">+0,05 г обоим</Badge>
+          </div>
+          <img src="/gold/pinch.jpg" alt="" className="gold-img h-20 w-32 object-cover" />
         </div>
-        <h1 className="font-display text-[34px] font-bold uppercase leading-none">Пригласи не ссылкой, а золотом</h1>
-        <p className="mt-2 text-sm text-ink-2">Друг сразу увидит щепотку золота в своей капсуле. Когда он сделает первую настоящую покупку — вы оба получите по 0,05 г.</p>
+        <div className="mt-4" />
+        <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em]">Пригласи друга подарком</h1>
+        <p className="mt-2 text-sm text-ink-2">Друг сразу увидит щепотку золота в приложении. Когда он сделает первую настоящую покупку — вы оба получите по 0,05 г.</p>
 
         <div className="mt-5 space-y-2">
           {CONTACTS.filter((c) => !invited.has(c.name)).map((c) => (
@@ -213,14 +144,12 @@ export function GiftReceived() {
   const nav = useNavigate()
   return (
     <div className="flex min-h-full flex-col items-center bg-surface px-5 pb-10 pt-16 text-center">
-      <Sticker bg="#fff" rotate={-4}>
-        Айгерим подарила тебе золото
-      </Sticker>
-      <motion.div className="my-8" initial={{ scale: 0.7, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring' }}>
+      <Badge tone="gold">Айгерим подарила тебе золото</Badge>
+      <motion.div className="my-8" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring' }}>
         <GoldCapsule grams={0.06} height={200} />
       </motion.div>
-      <h1 className="font-display text-[40px] leading-[1]">0,01 г золота — твои</h1>
-      <p className="mt-3 text-ink/80">Настоящая доля в слитке пробы 999,9. Забери после регистрации — это 2 минуты.</p>
+      <h1 className="text-[32px] font-bold leading-tight tracking-[-0.02em]">0,01 г золота — твои</h1>
+      <p className="mt-3 text-ink-2">Настоящая доля в слитке пробы 999,9. Забери после регистрации — это 2 минуты.</p>
       <div className="mt-auto w-full">
         <Button onClick={() => nav(-1)}>Забрать подарок</Button>
       </div>
@@ -243,7 +172,7 @@ export function Levels() {
     <Screen>
       <Header title="Уровни" />
       <div className="px-5">
-        <h1 className="font-display text-[34px] font-bold uppercase leading-none">Приложение растёт вместе с тобой</h1>
+        <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em]">Приложение растёт вместе с тобой</h1>
         <div className="mt-5 space-y-2">
           {levels.map((l) => (
             <Card key={l.id} className={level === l.id ? 'ring-2 ring-gold' : ''}>
@@ -288,7 +217,7 @@ export function PartnerConnect() {
     <Screen>
       <Header title="Партнёры МФЦА" />
       <div className="px-5">
-        <h1 className="font-display text-[34px] font-bold uppercase leading-none">Все кошельки в одном экране</h1>
+        <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em]">Все кошельки в одном экране</h1>
         <p className="mt-2 text-sm text-ink-2">Подключи кошелёк у партнёра МФЦА — увидишь его баланс в общем портфеле. Только просмотр.</p>
         <Card className="mt-4">
           <div className="font-semibold">{PARTNER.name}</div>
@@ -336,29 +265,6 @@ export function PartnerConnect() {
             </button>
           </>
         )}
-      </div>
-    </Screen>
-  )
-}
-
-export function History() {
-  const h = useBank((s) => s.history)
-  return (
-    <Screen>
-      <Header title="История операций" />
-      <div className="space-y-2 px-5 pb-6">
-        {h.map((o) => (
-          <Card key={o.id} className="flex items-center justify-between py-4">
-            <div>
-              <div className="font-semibold">{o.title}</div>
-              <div className="text-xs text-ink-2">{new Date(o.at).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
-            </div>
-            <div className="num text-right text-sm">
-              {o.kzt !== 0 && <div className="font-semibold">{`${o.kzt > 0 ? '+' : '−'}${formatKzt(Math.abs(o.kzt), 1)}`}</div>}
-              {o.grams !== 0 && <div className={o.kzt !== 0 ? 'text-ink-2' : 'font-semibold'}>{`${o.grams > 0 ? '+' : '−'}${o.asset === 'usdt' ? `${formatNum(Math.abs(o.grams), 2)} USDT` : `${formatNum(Math.abs(o.grams), 6)} г`}`}</div>}
-            </div>
-          </Card>
-        ))}
       </div>
     </Screen>
   )
