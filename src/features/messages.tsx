@@ -20,7 +20,7 @@ const DAY = 86400000
 /** Inbox built from real state (DESIGN-SYSTEM §13 «Сообщения»). */
 export function buildMessages(s: BankState): Msg[] {
   const out: Msg[] = [
-    { id: 'welcome', at: s.installedAt, icon: Hand, tone: 'grey', title: 'Добро пожаловать в Altyn', text: 'Мы положили 50 000 ₸ тестовых денег. Начни с покупки золота в режиме Пробы — без риска.', to: '/buy?try=1' },
+    { id: 'welcome', at: s.installedAt, icon: Hand, tone: 'grey', title: 'Добро пожаловать в GRAM', text: 'Мы положили 50 000 ₸ тестовых денег. Начни с покупки золота в режиме Пробы — без риска.', to: '/buy?try=1' },
   ]
   for (const o of s.history) {
     if (o.id === 'seed-cb') continue
@@ -70,15 +70,15 @@ export function Messages() {
     const t = setTimeout(() => useBank.getState().markMessagesRead(), 600)
     return () => clearTimeout(t)
   }, [])
-  const tones = { grey: 'bg-white text-ink', gold: 'bg-gold-soft text-[#7A5527]', green: 'bg-mint text-[#00663F]' }
+  const tones = { grey: 'bg-white text-ink', gold: 'bg-gold-soft text-[#7A4A00]', green: 'bg-mint text-[#00663F]' }
 
   return (
     <TabPage>
       <PageTitle>Сообщения</PageTitle>
       <div className="space-y-2 px-4">
         {msgs.map((m) => (
-          <button key={m.id} onClick={() => m.to && nav(m.to)} className="flex w-full gap-3 rounded-2xl bg-white p-4 text-left">
-            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${tones[m.tone]} ${m.tone === 'grey' ? '!bg-surface' : ''}`}>
+          <button key={m.id} onClick={() => m.to && nav(m.to)} className="flex w-full gap-3 rounded-2xl bg-surface p-4 text-left">
+            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${tones[m.tone]} ${m.tone === 'grey' ? '!bg-white' : ''}`}>
               <m.icon size={20} strokeWidth={1.8} />
             </span>
             <div className="min-w-0 flex-1">

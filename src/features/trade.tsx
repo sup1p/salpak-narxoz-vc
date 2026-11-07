@@ -159,7 +159,7 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
         title={`${buy ? 'Купить' : 'Продать'} ${what}`}
         right={
           sandbox ? (
-            <Sticker bg="#D2EEE5" rotate={4} className="text-[11px]">
+            <Sticker bg="#C4F0DE" rotate={4} className="text-[11px]">
               Проба
             </Sticker>
           ) : undefined
@@ -269,7 +269,7 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
             </motion.div>
           )}
           <h1 className="mt-5 text-[32px] font-bold leading-none tracking-[-0.02em]">{buy ? `+${fu(asset, r.grams)}` : `+${formatKzt(r.totalKzt)}`}</h1>
-          <p className="mt-2 text-ink-2">{buy ? (sandbox ? 'Это была проба — реальные деньги не тронуты.' : isGold ? 'Золото уже в твоей копилке.' : 'USDT зачислены на счёт в Altyn.') : 'Деньги уже на карте.'}</p>
+          <p className="mt-2 text-ink-2">{buy ? (sandbox ? 'Это была проба — реальные деньги не тронуты.' : isGold ? 'Золото уже в твоей копилке.' : 'USDT зачислены на счёт в GRAM.') : 'Деньги уже на карте.'}</p>
           <Card className="mt-5 w-full text-left">
             <div className="mb-1 text-sm font-semibold">Чек · Из чего цена</div>
             <ReceiptView r={r} onTerm={goTerm} />

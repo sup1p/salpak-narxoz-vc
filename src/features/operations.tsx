@@ -75,7 +75,7 @@ export function Operations() {
             { k: 'Куплено золота', v: `${formatNum(goldBought, 4)} г` },
             { k: 'Кешбэк золотом', v: `${formatNum(cashback, 4)} г` },
           ].map((x) => (
-            <div key={x.k} className="rounded-2xl bg-white p-3">
+            <div key={x.k} className="rounded-2xl bg-surface p-3">
               <div className="text-xs text-ink-2">{x.k}</div>
               <div className="num mt-1 text-[15px] font-semibold">{x.v}</div>
             </div>
@@ -88,7 +88,7 @@ export function Operations() {
             <button
               key={x.id}
               onClick={() => setF(x.id)}
-              className={`h-9 shrink-0 rounded-full px-4 text-sm font-medium ${f === x.id ? 'bg-ink text-white' : 'bg-white text-ink'}`}
+              className={`h-9 shrink-0 rounded-full px-4 text-sm font-medium ${f === x.id ? 'bg-ink text-white' : 'bg-surface text-ink'}`}
             >
               {x.label}
             </button>

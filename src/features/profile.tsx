@@ -29,7 +29,7 @@ export function TaxReadiness() {
     const blob = new Blob(['﻿' + rows.map((r) => r.join(';')).join('\n')], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = 'altyn-declaration-data.csv'
+    a.download = 'gram-declaration-data.csv'
     a.click()
     s.track('tax_export')
   }

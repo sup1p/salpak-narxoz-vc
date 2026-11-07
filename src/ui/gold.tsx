@@ -5,7 +5,7 @@ import type { Status } from '../domain/loyalty'
 /** Pill tag (§13). `rotate` kept for API compat, ignored. Prefer <Badge> from ui.tsx in new code. */
 export function Sticker({
   children,
-  bg = '#F6E7D3',
+  bg = '#FFE7B8',
   color,
   className = '',
 }: {
@@ -18,7 +18,7 @@ export function Sticker({
   return (
     <span
       className={`inline-flex h-6 shrink-0 items-center whitespace-nowrap rounded-full px-2.5 text-xs font-semibold ${className}`}
-      style={{ background: bg, color: color ?? (bg === '#00AB75' || bg === '#141518' ? '#FFFFFF' : '#141518') }}
+      style={{ background: bg, color: color ?? (bg === '#00AB75' || bg === '#0B0B0C' ? '#FFFFFF' : '#0B0B0C') }}
     >
       {children}
     </span>
@@ -31,7 +31,7 @@ export function Nugget({ size = 64, className = '' }: { size?: number; className
       <defs>
         <linearGradient id="ng" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#F8E3C4" />
-          <stop offset=".45" stopColor="#DCA86E" />
+          <stop offset=".45" stopColor="#F2AE3A" />
           <stop offset="1" stopColor="#B98547" />
         </linearGradient>
       </defs>
@@ -48,7 +48,7 @@ export function BarKeychain({ size = 120, className = '' }: { size?: number; cla
       <defs>
         <linearGradient id="bk" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#F8E3C4" />
-          <stop offset=".5" stopColor="#DCA86E" />
+          <stop offset=".5" stopColor="#F2AE3A" />
           <stop offset="1" stopColor="#B98547" />
         </linearGradient>
       </defs>
@@ -60,7 +60,7 @@ export function BarKeychain({ size = 120, className = '' }: { size?: number; cla
         999,9
       </text>
       <text x="50" y="98" textAnchor="middle" fontFamily="Oswald" fontWeight="600" fontSize="9" fill="#6B4A22">
-        ALTYN · 1 KG
+        GRAM · 1 KG
       </text>
     </svg>
   )
@@ -155,7 +155,7 @@ export function TimerRing({ left, total = 30 }: { left: number; total?: number }
           cy="24"
           r={r}
           fill="none"
-          stroke={warn ? '#E8590C' : '#DCA86E'}
+          stroke={warn ? '#E8590C' : '#F2AE3A'}
           strokeWidth="4"
           strokeLinecap="round"
           strokeDasharray={c}
