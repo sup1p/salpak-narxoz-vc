@@ -24,7 +24,7 @@ export function More() {
       <Toast show={!!toast}>{toast}</Toast>
       <PageTitle>Ещё</PageTitle>
       <div className="px-4">
-        <div className="flex items-center gap-3 rounded-2xl bg-white p-4">
+        <div className="flex items-center gap-3 rounded-2xl bg-surface p-4">
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gold text-lg font-bold">А</span>
           <div className="min-w-0 flex-1">
             <div className="text-[17px] font-semibold">Айгерим</div>
@@ -51,17 +51,17 @@ export function More() {
         </List>
 
         <SectionTitle>Демо для защиты</SectionTitle>
-        <div className="rounded-2xl bg-white p-4">
+        <div className="rounded-2xl bg-surface p-4">
           <div className="text-sm text-ink-2">Статус «Золотого дождя»</div>
           <div className="mt-2 grid grid-cols-3 gap-2">
-            <button className="h-10 rounded-xl bg-surface text-sm font-medium" onClick={() => s.setRegularMonths(0)}>
+            <button className="h-10 rounded-xl bg-white text-sm font-medium" onClick={() => s.setRegularMonths(0)}>
               Как есть
             </button>
-            <button className="h-10 rounded-xl bg-surface text-sm font-medium" onClick={() => s.cardKzt + s.savingsKzt < 100000 && s.topUp(100000 - s.cardKzt - s.savingsKzt)}>
+            <button className="h-10 rounded-xl bg-white text-sm font-medium" onClick={() => s.cardKzt + s.savingsKzt < 100000 && s.topUp(100000 - s.cardKzt - s.savingsKzt)}>
               Самородок
             </button>
             <button
-              className="h-10 rounded-xl bg-surface text-sm font-medium"
+              className="h-10 rounded-xl bg-white text-sm font-medium"
               onClick={() => {
                 s.topUp(Math.max(0, 500000 - s.cardKzt - s.savingsKzt))
                 s.setRegularMonths(2)
@@ -75,7 +75,7 @@ export function More() {
               s.reset()
               nav('/welcome')
             }}
-            className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-surface text-sm font-medium text-err"
+            className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-white text-sm font-medium text-err"
           >
             <RotateCcw size={16} /> Сбросить демо
           </button>

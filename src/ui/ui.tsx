@@ -73,7 +73,7 @@ export function Header({ title, back = true, right }: { title?: string; back?: b
 export function PageTitle({ children, right }: { children: ReactNode; right?: ReactNode }) {
   return (
     <div className="flex items-center justify-between px-4 pb-3 pt-5">
-      <h1 className="text-[26px] font-bold tracking-[-0.02em]">{children}</h1>
+      <h1 className="text-[30px] font-extrabold tracking-[-0.03em]">{children}</h1>
       {right}
     </div>
   )
@@ -83,7 +83,7 @@ export function PageTitle({ children, right }: { children: ReactNode; right?: Re
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex items-baseline justify-between px-1 pb-2 pt-5">
-      <h2 className="text-[17px] font-semibold">{children}</h2>
+      <h2 className="text-[19px] font-extrabold tracking-[-0.02em]">{children}</h2>
       {action}
     </div>
   )
@@ -95,17 +95,19 @@ export function Screen({ children, className = '' }: { children: ReactNode; clas
 
 /** Grey page used by the five tab roots. */
 export function TabPage({ children }: { children: ReactNode }) {
-  return <div className="min-h-full bg-surface pb-24">{children}</div>
+  return <div className="min-h-full bg-white pb-24">{children}</div>
 }
 
 export function TestBadge() {
-  return <div className="mx-4 rounded-xl bg-white px-4 py-3 text-xs text-ink-2">Тестовый режим — реальные деньги и данные не используются</div>
+  return <div className="mx-4 rounded-xl bg-surface px-4 py-3 text-xs text-ink-2">Тестовый режим — реальные деньги и данные не используются</div>
 }
 
 /** One badge component (pill, 24px) — no hand-made text boxes. */
-export function Badge({ children, tone = 'gold' }: { children: ReactNode; tone?: 'gold' | 'green' | 'grey' | 'warn' | 'dark' }) {
+export function Badge({ children, tone = 'gold' }: { children: ReactNode; tone?: 'gold' | 'green' | 'grey' | 'warn' | 'dark' | 'lime' | 'lilac' }) {
   const t = {
-    gold: 'bg-gold-soft text-[#7A5527]',
+    gold: 'bg-gold-soft text-[#7A4A00]',
+    lime: 'bg-lime text-ink',
+    lilac: 'bg-lilac text-ink',
     green: 'bg-mint text-[#00663F]',
     grey: 'bg-surface text-ink-2',
     warn: 'bg-[#FDEDE3] text-warn',
@@ -116,7 +118,7 @@ export function Badge({ children, tone = 'gold' }: { children: ReactNode; tone?:
 
 /** Soft circle with an icon, used by every list row. */
 export function IconCircle({ icon: Icon, tone = 'grey' }: { icon: LucideIcon; tone?: 'grey' | 'gold' | 'green' | 'dark' }) {
-  const t = { grey: 'bg-surface text-ink', gold: 'bg-gold-soft text-[#7A5527]', green: 'bg-mint text-[#00663F]', dark: 'bg-ink text-white' }[tone]
+  const t = { grey: 'bg-surface text-ink', gold: 'bg-gold-soft text-[#7A4A00]', green: 'bg-mint text-[#00663F]', dark: 'bg-ink text-white' }[tone]
   return (
     <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${t}`}>
       <Icon size={20} strokeWidth={1.8} />
@@ -168,7 +170,7 @@ export function ListRow({
 
 /** White grouped list with hairline dividers inset after the icon. */
 export function List({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-2xl bg-white px-4 [&>*+*]:border-t [&>*+*]:border-line ${className}`}>{children}</div>
+  return <div className={`[&>*+*]:border-t [&>*+*]:border-line ${className}`}>{children}</div>
 }
 
 export function Row({ label, value, strong, onLabel }: { label: ReactNode; value: ReactNode; strong?: boolean; onLabel?: () => void }) {

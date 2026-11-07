@@ -2,21 +2,24 @@
 
 /* Tokens — DESIGN-SYSTEM.md §2 (BCC colors) + §12 (Gold Apple-style) */
 @theme {
-  --color-ink: #141518;
+  --color-ink: #0B0B0C;
   --color-ink-2: #61656C;
   --color-ink-3: #7F8085;
   --color-paper: #ffffff;
-  --color-surface: #F5F5FA;
+  --color-surface: #F4F4F6;
   --color-line: #E7E7EB;
-  --color-gold: #DCA86E;
-  --color-gold-soft: #F6E7D3;
-  --color-gold-light: #F7E1B5;
-  --color-gold-deep: #C3904F;
+  --color-gold: #F2AE3A;
+  --color-gold-soft: #FFE7B8;
+  --color-gold-light: #FFD27A;
+  --color-gold-deep: #C9821A;
   --color-sky-top: #7fb2ec;
   --color-sky-bottom: #dcebfa;
   --color-green: #00AB75;
   --color-green-dark: #27AE60;
-  --color-mint: #D2EEE5;
+  --color-mint: #C4F0DE;
+  --color-lilac: #D9CCFF;
+  --color-lime: #E4F76A;
+  --color-peach: #FFD2B8;
   --color-ok: #00AB75;
   --color-warn: #e8590c;
   --color-err: #D11F23;
