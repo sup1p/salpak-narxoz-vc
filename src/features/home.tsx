@@ -6,7 +6,7 @@ import { nextStatusGap, STATUS_LABEL } from '../domain/loyalty'
 import { formatGrams, formatKzt, formatNum } from '../domain/money'
 import { hasRealBuy, selectPortfolio, selectRegular, selectStatus, useBank } from '../store/useBank'
 import { GoldCapsule, MiningRain } from '../ui/gold'
-import { Badge, Balance, List, ListRow, SectionTitle, TabPage, Toast } from '../ui/ui'
+import { Badge, Balance, List, ListRow, Logo, SectionTitle, TabPage, Toast } from '../ui/ui'
 import { useUnreadCount } from './messages'
 
 function Action({ icon: Icon, label, onClick, gold }: { icon: LucideIcon; label: string; onClick: () => void; gold?: boolean }) {
@@ -70,15 +70,13 @@ export function Home() {
 
       {/* header */}
       <div className="flex items-center justify-between px-4 pb-1 pt-4">
-        <button onClick={() => nav('/more')} className="flex items-center gap-3 text-left">
-          <span className="grid h-10 w-10 place-items-center rounded-full bg-gold text-base font-bold">А</span>
-          <div>
-            <div className="text-[12px] font-semibold">
-              GRAM <span className="text-green">by BCC</span>
-            </div>
-            <div className="text-[17px] font-bold leading-tight">Айгерим</div>
+        <div className="flex items-center gap-2.5">
+          <Logo size={34} />
+          <div className="leading-tight">
+            <div className="text-[19px] font-extrabold tracking-[-0.02em]">GRAM</div>
+            <div className="text-[11px] font-semibold text-green">by BCC</div>
           </div>
-        </button>
+        </div>
         <button aria-label="Сообщения" onClick={() => nav('/messages')} className="relative grid h-10 w-10 place-items-center rounded-full bg-surface">
           <Bell size={20} strokeWidth={1.9} />
           {unread > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-err" />}

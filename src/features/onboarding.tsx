@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBank } from '../store/useBank'
-import { Button, Header, Screen, TestBadge } from '../ui/ui'
+import { Button, Header, Logo, Screen, TestBadge } from '../ui/ui'
 
 /**
  * Onboarding = login only. After the PIN the user lands on the real home screen
@@ -51,8 +51,8 @@ export function Login() {
       <Header back={false} />
       <div className="px-5">
         <div className="mb-5 flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-ink text-sm font-extrabold text-gold">G</span>
-          <span className="text-[15px] font-semibold">GRAM</span>
+          <Logo size={36} />
+          <span className="text-[17px] font-extrabold tracking-[-0.02em]">GRAM</span>
           <span className="text-xs font-semibold text-green">by BCC</span>
         </div>
         <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em]">{titles[step]}</h1>
