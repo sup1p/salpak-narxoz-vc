@@ -1,10 +1,10 @@
 import { motion } from 'framer-motion'
-import { AlertTriangle, ChevronRight, Download, FileText, Gift, History as HistoryIcon, Link2, Lock, RotateCcw, Sparkles, Unlock } from 'lucide-react'
+import { AlertTriangle, ArrowLeftRight, BarChart3, ChevronRight, Download, FileText, Gift, History as HistoryIcon, Link2, Lock, RotateCcw, Sparkles, Unlock } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CONTACTS, LESSONS, PARTNER, USDT_KZT } from '../data/seed'
 import { formatGrams, formatKzt, formatNum } from '../domain/money'
-import { selectStatus, useBank, type Level } from '../store/useBank'
+import { FRIEND_BONUS_G, hasRealBuy, selectLevel, selectStatus, useBank, type Level } from '../store/useBank'
 import { STATUS_LABEL } from '../domain/loyalty'
 import { GoldCapsule, Nugget, Sticker } from '../ui/gold'
 import { Button, Card, Header, Row, Screen, TestBadge } from '../ui/ui'
@@ -28,6 +28,7 @@ function Item({ icon: Icon, title, sub, to }: { icon: typeof Gift; title: string
 export function Profile() {
   const s = useBank()
   const status = selectStatus(s)
+  const level = selectLevel(s)
   const nav = useNavigate()
   return (
     <div className="px-5 pb-28 pt-6">
@@ -42,8 +43,10 @@ export function Profile() {
         <Item icon={Sparkles} title="Кешбэк и Золотой дождь" sub={s.cashbackMode === 'gold' ? 'Сейчас: в золоте' : 'Сейчас: в ₸'} to="/cashback" />
         <Item icon={FileText} title="Налоги и декларация" sub="Готовность к декларации" to="/tax" />
         <Item icon={Gift} title="Позови подарком" sub="Подари другу 0,01 г" to="/invite" />
-        <Item icon={Unlock} title="Уровни" sub={{ start: 'Старт', saver: 'Копилка', investor: 'Инвестор' }[s.level]} to="/levels" />
-        <Item icon={Link2} title="Партнёры МФЦА" sub={s.level === 'investor' ? (s.partnerConnected ? 'Подключён' : 'Подключить кошелёк') : 'Откроется на уровне «Инвестор»'} to={s.level === 'investor' ? '/partner' : '/levels'} />
+        <Item icon={Unlock} title="Уровни" sub={{ start: 'Старт', saver: 'Копилка', investor: 'Инвестор' }[level]} to="/levels" />
+        <Item icon={Link2} title="Партнёры МФЦА" sub={level === 'investor' ? (s.partnerConnected ? 'Подключён · только просмотр' : 'Подключить кошелёк') : 'Откроется на уровне «Инвестор»'} to={level === 'investor' ? '/partner' : '/levels'} />
+        <Item icon={ArrowLeftRight} title="Обмен ₸ ↔ USDT" sub={level === 'investor' ? (s.usdt > 0 ? `${formatNum(s.usdt, 2)} USDT` : 'По котировке, как золото') : 'Откроется на уровне «Инвестор»'} to={level === 'investor' ? '/otc' : '/levels'} />
+        <Item icon={BarChart3} title="Метрики гипотезы" sub="Активация, первая покупка, кешбэк, возвраты" to="/metrics" />
         <Item icon={HistoryIcon} title="История операций" to="/history" />
       </div>
 
@@ -86,6 +89,8 @@ export function TaxReadiness() {
       ['Средняя цена покупки, ₸/г', s.avgPrice.toFixed(2)],
       ['Результат продаж за год, ₸', s.realizedKzt.toFixed(2)],
       ['Подарено друзьям, г', s.giftsOutGrams.toFixed(6)],
+      ['Получено бонусов за друзей, г', s.bonusGrams.toFixed(6)],
+      ['USDT на дату выписки', s.usdt.toFixed(2)],
       ['Примечание', 'Тестовые данные. Подсказка, не налоговая консультация.'],
     ]
     const blob = new Blob(['﻿' + rows.map((r) => r.join(';')).join('\n')], { type: 'text/csv;charset=utf-8' })
@@ -93,6 +98,7 @@ export function TaxReadiness() {
     a.href = URL.createObjectURL(blob)
     a.download = 'altyn-declaration-data.csv'
     a.click()
+    s.track('tax_export')
   }
   return (
     <Screen>
@@ -114,6 +120,7 @@ export function TaxReadiness() {
           <div className="text-sm font-semibold">Форма 270 — результат продаж</div>
           <Row label="Результат к средней цене покупки" value={`${s.realizedKzt >= 0 ? '+' : '−'}${formatKzt(Math.abs(s.realizedKzt), 0)}`} />
           <Row label="Подарки друзьям" value={formatGrams(s.giftsOutGrams)} />
+          <Row label="Бонусы за друзей (облагаются ИПН)" value={formatGrams(s.bonusGrams)} />
         </Card>
         <Button className="mt-4" onClick={download}>
           <Download size={18} /> Скачать выписку (CSV)
@@ -127,13 +134,13 @@ export function TaxReadiness() {
 export function InviteGift() {
   const s = useBank()
   const nav = useNavigate()
-  const [to, setTo] = useState<string | null>(null)
   const [err, setErr] = useState('')
   const send = (name: string) => {
-    const e = s.sendGift(0.01)
+    const e = s.sendGift(0.01, name)
     if (e) return setErr('Чтобы подарить 0,01 г, сначала купи немного золота.')
-    setTo(name)
+    setErr('')
   }
+  const invited = new Set(s.invites.map((i) => i.name))
   return (
     <Screen>
       <Header title="Позови подарком" />
@@ -150,34 +157,50 @@ export function InviteGift() {
         <h1 className="font-display text-[34px] font-bold uppercase leading-none">Пригласи не ссылкой, а золотом</h1>
         <p className="mt-2 text-sm text-ink-2">Друг сразу увидит щепотку золота в своей капсуле. Когда он сделает первую настоящую покупку — вы оба получите по 0,05 г.</p>
 
-        {!to ? (
+        <div className="mt-5 space-y-2">
+          {CONTACTS.filter((c) => !invited.has(c.name)).map((c) => (
+            <Card key={c.name} className="flex items-center justify-between" onClick={() => send(c.name)}>
+              <div>
+                <div className="font-semibold">{c.name}</div>
+                <div className="text-xs text-ink-2">{c.phone}</div>
+              </div>
+              <span className="text-sm font-semibold">Подарить 0,01 г</span>
+            </Card>
+          ))}
+          {err && <p className="text-sm text-err">{err}</p>}
+        </div>
+
+        {s.invites.length > 0 && (
           <div className="mt-5 space-y-2">
-            {CONTACTS.map((c) => (
-              <Card key={c.name} className="flex items-center justify-between" onClick={() => send(c.name)}>
-                <div>
-                  <div className="font-semibold">{c.name}</div>
-                  <div className="text-xs text-ink-2">{c.phone}</div>
+            <div className="text-sm font-semibold">Твои приглашения</div>
+            {s.invites.map((inv) => (
+              <Card key={inv.name}>
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold">{inv.name}</div>
+                  <span className={`text-xs font-semibold ${inv.status === 'bought' ? 'text-ok' : 'text-ink-2'}`}>
+                    {inv.status === 'bought' ? `+${formatNum(FRIEND_BONUS_G, 2)} г получено` : 'ждём первую покупку'}
+                  </span>
                 </div>
-                <span className="text-sm font-semibold">Подарить</span>
+                <div className="mt-2 flex gap-1.5 text-[11px] text-ink-2">
+                  {['Подарок отправлен', 'Установил(а)', 'Первая покупка'].map((st, k) => (
+                    <span key={st} className={`rounded-full px-2 py-1 ${k === 0 || inv.status === 'bought' ? 'bg-mint text-ink' : 'bg-white'}`}>
+                      {st}
+                    </span>
+                  ))}
+                </div>
+                {inv.status === 'invited' && (
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <Button small variant="secondary" onClick={() => nav('/gift')}>
+                      Глазами друга
+                    </Button>
+                    <Button small onClick={() => s.simulateFriendPurchase(inv.name)}>
+                      Демо: друг купил
+                    </Button>
+                  </div>
+                )}
               </Card>
             ))}
-            {err && <p className="text-sm text-err">{err}</p>}
           </div>
-        ) : (
-          <Card className="mt-5">
-            <div className="font-semibold">Подарок для {to} отправлен</div>
-            <div className="mt-3 space-y-2 text-sm">
-              {['Приглашён', 'Установил приложение', 'Первая покупка → +0,05 г обоим'].map((st, i) => (
-                <div key={st} className="flex items-center gap-2">
-                  <span className={`h-3 w-3 rounded-full ${i === 0 ? 'bg-ok' : 'bg-line'}`} />
-                  {st}
-                </div>
-              ))}
-            </div>
-            <Button className="mt-4" variant="secondary" onClick={() => nav('/gift')}>
-              Посмотреть глазами друга
-            </Button>
-          </Card>
         )}
         <p className="mt-4 mb-6 text-[11px] text-ink-3">Награда — только после первой реальной покупки друга. Подарки и бонусы видны в разделе «Налоги»; налог по бонусу удерживает банк как налоговый агент (гипотеза).</p>
       </div>
@@ -207,11 +230,13 @@ export function GiftReceived() {
 export function Levels() {
   const s = useBank()
   const nav = useNavigate()
-  const bought = s.history.some((o) => o.type === 'buy')
+  const bought = hasRealBuy(s)
+  const level = selectLevel(s)
+  const rank = { start: 0, saver: 1, investor: 2 }
   const levels: { id: Level; title: string; cond: string; opens: string; ok: boolean }[] = [
     { id: 'start', title: 'Старт', cond: 'Сразу', opens: 'Золото от 1000 ₸, кешбэк в золоте, режим Пробы', ok: true },
-    { id: 'saver', title: 'Копилка', cond: 'Первая покупка + 2 урока', opens: 'Цели в граммах, автосбережение', ok: bought && s.lessonsDone.length >= 2 },
-    { id: 'investor', title: 'Инвестор', cond: `Базовые уроки (${s.lessonsDone.length}/${LESSONS.length}) + 3 месяца`, opens: 'Партнёры МФЦА, обмен ₸ ↔ USDT', ok: s.level === 'investor' },
+    { id: 'saver', title: 'Копилка', cond: `Первая покупка ${bought ? '✓' : '—'} + 2 урока (${Math.min(2, s.lessonsDone.length)}/2)`, opens: 'Цели в граммах, автосбережение', ok: rank[level] >= 1 },
+    { id: 'investor', title: 'Инвестор', cond: `Все уроки Академии (${s.lessonsDone.length}/${LESSONS.length})`, opens: 'Партнёры МФЦА, обмен ₸ ↔ USDT', ok: rank[level] >= 2 },
   ]
   return (
     <Screen>
@@ -220,7 +245,7 @@ export function Levels() {
         <h1 className="font-display text-[34px] font-bold uppercase leading-none">Приложение растёт вместе с тобой</h1>
         <div className="mt-5 space-y-2">
           {levels.map((l) => (
-            <Card key={l.id} className={s.level === l.id ? 'ring-2 ring-gold' : ''}>
+            <Card key={l.id} className={level === l.id ? 'ring-2 ring-gold' : ''}>
               <div className="flex items-center justify-between">
                 <div className="font-semibold">{l.title}</div>
                 {l.ok ? <Unlock size={18} /> : <Lock size={18} className="text-ink-3" />}
@@ -230,7 +255,7 @@ export function Levels() {
             </Card>
           ))}
         </div>
-        <p className="mt-3 text-[11px] text-ink-3">Уровень «Инвестор» — проверка готовности (как тест у брокеров), а не награда.</p>
+        <p className="mt-3 text-[11px] text-ink-3">Уровни открываются сами, когда выполнены условия. «Инвестор» — проверка готовности (как тест у брокеров), а не награда.</p>
         <Button
           className="mt-4 mb-6"
           variant="secondary"
@@ -282,17 +307,34 @@ export function PartnerConnect() {
           </div>
           <div className="mt-2 text-xs text-ink-3">Активы партнёра не учитываются в статусе «Золотого дождя». Модель — гипотеза для проверки.</div>
         </Card>
+        {s.partnerConnected && (
+          <Card className="mt-3 flex items-center justify-between">
+            <div>
+              <div className="font-semibold">Подключено · только просмотр</div>
+              <div className="num text-xs text-ink-2">
+                {PARTNER.usdt} USDT ≈ {formatKzt(PARTNER.usdt * USDT_KZT, 0)}
+              </div>
+            </div>
+            <Button small variant="secondary" onClick={() => s.revokePartner()}>
+              Отозвать доступ
+            </Button>
+          </Card>
+        )}
         {state === 'error' && (
           <div className="mt-3 flex gap-2 rounded-[16px] bg-warn/10 p-4 text-sm text-warn">
             <AlertTriangle size={18} className="shrink-0" /> Партнёр не отвечает, попробуй позже. Мы ничего не подключили.
           </div>
         )}
-        <Button className="mt-4" loading={state === 'loading'} onClick={() => connect(false)}>
-          Разрешить просмотр · {PARTNER.usdt} USDT ≈ {formatKzt(PARTNER.usdt * USDT_KZT, 0)}
-        </Button>
-        <button onClick={() => connect(true)} className="mt-2 mb-6 h-10 w-full text-xs text-ink-3">
-          демо: партнёр недоступен
-        </button>
+        {!s.partnerConnected && (
+          <>
+            <Button className="mt-4" loading={state === 'loading'} onClick={() => connect(false)}>
+              Разрешить просмотр · {PARTNER.usdt} USDT ≈ {formatKzt(PARTNER.usdt * USDT_KZT, 0)}
+            </Button>
+            <button onClick={() => connect(true)} className="mt-2 mb-6 h-10 w-full text-xs text-ink-3">
+              демо: партнёр недоступен
+            </button>
+          </>
+        )}
       </div>
     </Screen>
   )
@@ -312,7 +354,7 @@ export function History() {
             </div>
             <div className="num text-right text-sm">
               {o.kzt !== 0 && <div className="font-semibold">{`${o.kzt > 0 ? '+' : '−'}${formatKzt(Math.abs(o.kzt), 1)}`}</div>}
-              {o.grams !== 0 && <div className={o.kzt !== 0 ? 'text-ink-2' : 'font-semibold'}>{`${o.grams > 0 ? '+' : '−'}${formatNum(Math.abs(o.grams), 6)} г`}</div>}
+              {o.grams !== 0 && <div className={o.kzt !== 0 ? 'text-ink-2' : 'font-semibold'}>{`${o.grams > 0 ? '+' : '−'}${o.asset === 'usdt' ? `${formatNum(Math.abs(o.grams), 2)} USDT` : `${formatNum(Math.abs(o.grams), 6)} г`}`}</div>}
             </div>
           </Card>
         ))}
