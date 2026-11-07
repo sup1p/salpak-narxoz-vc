@@ -12,16 +12,17 @@ import { Button, Card, Header, Row, Screen, TestBadge } from '../ui/ui'
 function Item({ icon: Icon, title, sub, to }: { icon: typeof Gift; title: string; sub?: string; to: string }) {
   const nav = useNavigate()
   return (
-    <Card className="flex items-center justify-between" onClick={() => nav(to)}>
+    // §12: Gold Apple-style menu — big lowercase items, thin dividers, no cards
+    <button onClick={() => nav(to)} className="flex w-full items-center justify-between border-b border-line py-3.5 text-left">
       <div className="flex items-center gap-3">
-        <Icon size={20} />
+        <Icon size={20} strokeWidth={1.7} className="text-ink-2" />
         <div>
-          <div className="font-semibold">{title}</div>
-          {sub && <div className="text-xs text-ink-2">{sub}</div>}
+          <div className="text-[19px] font-bold lowercase tracking-[-0.02em]">{title}</div>
+          {sub && <div className="text-xs text-ink-3">{sub}</div>}
         </div>
       </div>
       <ChevronRight size={18} className="text-ink-3" />
-    </Card>
+    </button>
   )
 }
 
@@ -33,13 +34,13 @@ export function Profile() {
   return (
     <div className="px-5 pb-28 pt-6">
       <div className="flex items-center gap-3">
-        <div className="gold-grad grid h-14 w-14 place-items-center rounded-full font-display text-xl font-bold">А</div>
+        <div className="grid h-14 w-14 place-items-center rounded-full bg-gold text-xl font-bold">А</div>
         <div>
           <div className="text-lg font-bold">Айгерим</div>
           <div className="text-xs text-ink-2">Тестовый профиль · статус «{STATUS_LABEL[status]}»</div>
         </div>
       </div>
-      <div className="mt-5 space-y-2">
+      <div className="mt-5">
         <Item icon={Sparkles} title="Кешбэк и Золотой дождь" sub={s.cashbackMode === 'gold' ? 'Сейчас: в золоте' : 'Сейчас: в ₸'} to="/cashback" />
         <Item icon={FileText} title="Налоги и декларация" sub="Готовность к декларации" to="/tax" />
         <Item icon={Gift} title="Позови подарком" sub="Подари другу 0,01 г" to="/invite" />
@@ -54,17 +55,17 @@ export function Profile() {
       <Card className="mt-2 space-y-3">
         <div className="text-sm">Статус для демо «Золотого дождя»</div>
         <div className="grid grid-cols-3 gap-2 text-xs">
-          <button className="h-10 rounded-full bg-white font-semibold" onClick={() => { s.setRegularMonths(0) }}>
+          <button className="h-10 rounded-[2px] bg-white font-semibold ring-1 ring-inset ring-line" onClick={() => { s.setRegularMonths(0) }}>
             как есть
           </button>
-          <button className="h-10 rounded-full bg-white font-semibold" onClick={() => { if (s.cardKzt + s.savingsKzt < 100000) s.topUp(100000 - s.cardKzt - s.savingsKzt) }}>
+          <button className="h-10 rounded-[2px] bg-white font-semibold ring-1 ring-inset ring-line" onClick={() => { if (s.cardKzt + s.savingsKzt < 100000) s.topUp(100000 - s.cardKzt - s.savingsKzt) }}>
             → Самородок
           </button>
-          <button className="h-10 rounded-full bg-white font-semibold" onClick={() => { s.topUp(Math.max(0, 500000 - s.cardKzt - s.savingsKzt)); s.setRegularMonths(2) }}>
+          <button className="h-10 rounded-[2px] bg-white font-semibold ring-1 ring-inset ring-line" onClick={() => { s.topUp(Math.max(0, 500000 - s.cardKzt - s.savingsKzt)); s.setRegularMonths(2) }}>
             → Слиток
           </button>
         </div>
-        <button onClick={() => { s.reset(); nav('/welcome') }} className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-white text-sm font-semibold">
+        <button onClick={() => { s.reset(); nav('/welcome') }} className="flex h-10 w-full items-center justify-center gap-2 rounded-[2px] bg-white text-sm font-semibold ring-1 ring-inset ring-line">
           <RotateCcw size={16} /> Сбросить демо
         </button>
       </Card>
@@ -183,7 +184,7 @@ export function InviteGift() {
                 </div>
                 <div className="mt-2 flex gap-1.5 text-[11px] text-ink-2">
                   {['Подарок отправлен', 'Установил(а)', 'Первая покупка'].map((st, k) => (
-                    <span key={st} className={`rounded-full px-2 py-1 ${k === 0 || inv.status === 'bought' ? 'bg-mint text-ink' : 'bg-white'}`}>
+                    <span key={st} className={`rounded-[2px] px-2 py-1 ${k === 0 || inv.status === 'bought' ? 'bg-mint text-ink' : 'bg-white'}`}>
                       {st}
                     </span>
                   ))}
@@ -211,14 +212,14 @@ export function InviteGift() {
 export function GiftReceived() {
   const nav = useNavigate()
   return (
-    <div className="sky flex min-h-full flex-col items-center px-5 pb-10 pt-16 text-center">
+    <div className="flex min-h-full flex-col items-center bg-surface px-5 pb-10 pt-16 text-center">
       <Sticker bg="#fff" rotate={-4}>
         Айгерим подарила тебе золото
       </Sticker>
       <motion.div className="my-8" initial={{ scale: 0.7, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring' }}>
         <GoldCapsule grams={0.06} height={200} />
       </motion.div>
-      <h1 className="font-display text-[44px] font-bold uppercase leading-[0.95] text-white drop-shadow-[0_2px_0_rgba(20,21,24,.25)]">0,01 г золота — твои</h1>
+      <h1 className="font-display text-[40px] leading-[1]">0,01 г золота — твои</h1>
       <p className="mt-3 text-ink/80">Настоящая доля в слитке пробы 999,9. Забери после регистрации — это 2 минуты.</p>
       <div className="mt-auto w-full">
         <Button onClick={() => nav(-1)}>Забрать подарок</Button>
