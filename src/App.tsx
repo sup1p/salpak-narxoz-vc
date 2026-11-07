@@ -24,26 +24,24 @@ function TabBar() {
   const nav = useNavigate()
   const show = ['/home', '/gold', '/academy', '/profile'].includes(pathname)
   if (!show) return null
+  // §12: plain white bar, icons only (aria-labels), centre square = buy gold
   return (
-    <nav className="absolute inset-x-4 bottom-4 z-30 flex h-16 items-center justify-between rounded-full bg-ink px-3 shadow-[0_8px_24px_rgba(20,21,24,.25)]">
+    <nav aria-label="Навигация" className="absolute inset-x-0 bottom-0 z-30 grid h-[72px] grid-cols-5 items-center border-t border-line bg-white pb-3">
       {TABS.map((t, i) =>
         t === null ? (
-          <button
-            key={i}
-            aria-label="Купить золото"
-            onClick={() => nav('/buy')}
-            className="gold-grad -mt-8 grid h-14 w-14 place-items-center rounded-full border-4 border-paper text-ink shadow-lg active:scale-95"
-          >
-            <Plus strokeWidth={3} />
+          <button key={i} aria-label="Купить золото" onClick={() => nav('/buy')} className="mx-auto grid h-11 w-11 place-items-center rounded-[2px] bg-ink text-gold active:opacity-80">
+            <Plus strokeWidth={2.5} />
           </button>
         ) : (
           <button
             key={t.to}
+            aria-label={t.label}
+            aria-current={pathname === t.to ? 'page' : undefined}
             onClick={() => nav(t.to)}
-            className={`flex h-12 min-w-14 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-[10px] font-medium ${pathname === t.to ? 'text-white' : 'text-white/45'}`}
+            className={`relative mx-auto grid h-11 w-11 place-items-center ${pathname === t.to ? 'text-ink' : 'text-ink-3'}`}
           >
-            <t.icon size={20} />
-            {t.label}
+            <t.icon size={22} strokeWidth={pathname === t.to ? 2.2 : 1.7} />
+            {pathname === t.to && <span className="absolute bottom-0 h-[2px] w-4 bg-gold" />}
           </button>
         ),
       )}
