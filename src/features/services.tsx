@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Landmark, BookOpen, Coins, FileText, Gift, Link2, Lock, Sparkles, type LucideIcon } from 'lucide-react'
+import { ArrowLeftRight, Landmark, Receipt, BookOpen, Coins, FileText, Gift, Link2, Lock, Sparkles, type LucideIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { formatGrams, formatNum } from '../domain/money'
 import { selectLevel, useBank } from '../store/useBank'
@@ -36,6 +36,13 @@ export function Services() {
   const s = useBank()
   const investor = selectLevel(s) === 'investor'
   const groups: { title: string; tiles: Tile[] }[] = [
+    {
+      title: 'Повседневное',
+      tiles: [
+        { to: '/payments', icon: Receipt, tint: 'bg-lime', title: 'Платежи', sub: 'Связь, интернет, QR — с кешбэком' },
+        { to: '/topup', icon: ArrowLeftRight, tint: 'bg-peach', title: 'Пополнение', sub: 'С карты другого банка, 0 ₸' },
+      ],
+    },
     {
       title: 'Накопления',
       tiles: [
