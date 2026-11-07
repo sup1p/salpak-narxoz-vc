@@ -107,11 +107,11 @@ export function TaxReadiness() {
       <div className="px-5">
         <h1 className="font-display text-[34px] font-bold uppercase leading-none">Первая декларация? Подготовим.</h1>
         <p className="mt-2 text-sm text-ink-2">Золото — это актив. Мы говорим об этом заранее, а не постфактум, и собираем данные за тебя.</p>
-        <Card className="mt-4 bg-ink text-white">
+        <div className="mt-4 bg-ink p-5 text-white">
           <div className="text-xs text-white/60">Срок подачи</div>
           <div className="num mt-1 text-3xl font-bold">через {days} дн.</div>
           <div className="text-xs text-white/60">до 15 сентября · напомним за 30 и 7 дней</div>
-        </Card>
+        </div>
         <Card className="mt-3">
           <div className="text-sm font-semibold">Форма 250 — активы</div>
           <Row label="Золото (токены)" value={formatGrams(s.gold)} />
