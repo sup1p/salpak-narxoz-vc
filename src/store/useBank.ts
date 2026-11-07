@@ -108,7 +108,7 @@ interface Actions {
   revokeBank(id: string): void
   debitBank(id: string, kzt: number): void
   confirm(r: Receipt, now: number): OpError | null
-  payCard(spendKzt: number, title?: string): { grams: number; kzt: number }
+  payCard(spendKzt: number, title?: string): { grams: number; kzt: number; error?: OpError }
   setCashbackMode(m: 'kzt' | 'gold'): void
   setSandbox(on: boolean): void
   bumpMarket(pct: number): void
@@ -274,6 +274,7 @@ export const useBank = create<BankState & Actions>()(
         // monthly cap resets when the calendar month changes
         if (s0.cashbackMonth !== monthKey(now)) set({ cashbackMonth: monthKey(now), cashbackUsedKzt: 0 })
         const s = get()
+        if (spendKzt > s.cardKzt) return { grams: 0, kzt: 0, error: 'INSUFFICIENT_FUNDS' as const }
         const status = selectStatus(s)
         const cb = cashbackKzt(spendKzt, status, s.cashbackUsedKzt)
         const ops: Op[] = [{ id: opId(), type: 'purchase', title, kzt: -spendKzt, grams: 0, at: now }]
@@ -399,3 +400,10 @@ export function selectLevel(s: BankState): Level {
 
 /** Accounts in other banks (read-only): shown in the total, excluded from the loyalty status. */
 export const selectOtherBanksKzt = (s: BankState) => s.bankLinks.reduce((a, b) => a + b.balanceKzt, 0)
+
+/** Cashback a card payment would bring right now (shown before confirming, US-15.1). */
+export function previewCashback(s: BankState, spendKzt: number): { kzt: number; grams: number } {
+  const used = s.cashbackMonth === monthKey(Date.now()) ? s.cashbackUsedKzt : 0
+  const kzt = cashbackKzt(spendKzt, selectStatus(s), used)
+  return { kzt, grams: kzt / s.market }
+}

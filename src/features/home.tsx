@@ -1,12 +1,11 @@
-import { ArrowDownLeft, ArrowRight, Landmark, Bell, BookOpen, ChevronRight, Coffee, Coins, CreditCard, FileText, Gift, PiggyBank, Plus, Repeat, Sparkles, type LucideIcon } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowDownLeft, ArrowRight, Landmark, Receipt, ScanLine, Bell, BookOpen, ChevronRight, Coffee, Coins, CreditCard, FileText, Gift, PiggyBank, Plus, Repeat, Sparkles, type LucideIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { PARTNER, USDT_KZT } from '../data/seed'
 import { nextStatusGap, STATUS_LABEL } from '../domain/loyalty'
 import { formatGrams, formatKzt, formatNum } from '../domain/money'
 import { hasRealBuy, selectOtherBanksKzt, selectPortfolio, selectRegular, selectStatus, useBank } from '../store/useBank'
-import { GoldCapsule, MiningRain } from '../ui/gold'
-import { Badge, Balance, List, ListRow, Logo, SectionTitle, TabPage, Toast } from '../ui/ui'
+import { GoldCapsule } from '../ui/gold'
+import { Badge, Balance, List, ListRow, Logo, SectionTitle, TabPage } from '../ui/ui'
 import { useUnreadCount } from './messages'
 
 function Action({ icon: Icon, label, onClick, gold }: { icon: LucideIcon; label: string; onClick: () => void; gold?: boolean }) {
@@ -34,23 +33,9 @@ export function Home() {
   const total = portfolio + partnerKzt + otherBanks
   const bought = hasRealBuy(s)
   const buyTo = bought ? '/buy' : '/buy?try=1'
-  const [toast, setToast] = useState('')
-  const [rain, setRain] = useState(false)
-  const [pulse, setPulse] = useState(0)
 
-  const flash = (t: string, ms = 2400) => {
-    setToast(t)
-    setTimeout(() => setToast(''), ms)
-  }
-  const pay = () => {
-    const r = s.payCard(1500, 'Кофе · Coffee Boom')
-    if (s.cashbackMode === 'gold') {
-      setRain(true)
-      setTimeout(() => setPulse((p) => p + 1), 900)
-      setTimeout(() => setRain(false), 2600)
-      flash(`Оплата 1 500 ₸ · кешбэк +${formatNum(r.grams, 4)} г золота`)
-    } else flash(`Оплата 1 500 ₸ · кешбэк +${formatNum(r.kzt, 0)} ₸`)
-  }
+
+
 
   const forYou: { icon: LucideIcon; title: string; sub: string; to: string; bg: string }[] = [
     !bought
@@ -66,8 +51,6 @@ export function Home() {
 
   return (
     <TabPage>
-      <Toast show={!!toast}>{toast}</Toast>
-      <MiningRain show={rain} status={status} />
 
       {/* header */}
       <div className="flex items-center justify-between px-4 pb-1 pt-4">
@@ -78,10 +61,15 @@ export function Home() {
             <div className="text-[11px] font-semibold text-green">by BCC</div>
           </div>
         </div>
+        <div className="flex gap-2">
+        <button aria-label="Сканировать QR" onClick={() => nav('/scan')} className="grid h-10 w-10 place-items-center rounded-full bg-surface">
+          <ScanLine size={20} strokeWidth={1.9} />
+        </button>
         <button aria-label="Сообщения" onClick={() => nav('/messages')} className="relative grid h-10 w-10 place-items-center rounded-full bg-surface">
           <Bell size={20} strokeWidth={1.9} />
           {unread > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-err" />}
         </button>
+        </div>
       </div>
 
       <div className="px-4">
@@ -99,14 +87,14 @@ export function Home() {
 
         <div data-tour="actions" className="mt-5 grid grid-cols-3">
           <Action icon={ArrowDownLeft} label="Пополнить" onClick={() => nav('/topup')} />
-          <Action icon={Coffee} label="Оплатить" onClick={pay} />
+          <Action icon={Receipt} label="Платежи" onClick={() => nav('/payments')} />
           <Action icon={Plus} label="Купить золото" gold onClick={() => nav(buyTo)} />
         </div>
 
         {/* hero banner: your gold */}
         <div data-tour="gold" className="relative mt-6 overflow-hidden rounded-3xl bg-gold-soft">
           <div className="absolute -right-6 top-6">
-            <GoldCapsule grams={s.gold} height={140} pulse={pulse} />
+            <GoldCapsule grams={s.gold} height={140} />
           </div>
           <div className="relative p-5">
             <div className="text-[13px] font-semibold text-[#7A4A00]">Твоё золото · проба 999,9</div>
