@@ -64,7 +64,7 @@ export function Home() {
           <Logo size={34} />
           <div className="leading-tight">
             <div className="text-[19px] font-extrabold tracking-[-0.02em]">GRAM</div>
-            <div className="text-[11px] font-semibold text-green">by BCC</div>
+            <div className="text-[11px] font-semibold text-green-ink">by BCC</div>
           </div>
         </div>
       </div>

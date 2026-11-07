@@ -1,3 +1,4 @@
+import { Delete } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBank } from '../store/useBank'
@@ -53,13 +54,13 @@ export function Login() {
         <div className="mb-5 flex items-center gap-2">
           <Logo size={36} />
           <span className="text-[17px] font-extrabold tracking-[-0.02em]">GRAM</span>
-          <span className="text-xs font-semibold text-green">by BCC</span>
+          <span className="text-xs font-semibold text-green-ink">by BCC</span>
         </div>
         <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em]">{titles[step]}</h1>
         <p className="mt-2 text-sm text-ink-2">{hints[step]}</p>
         <div className="num mt-6 flex h-14 items-center rounded-xl bg-surface px-4 text-[22px] font-semibold">
           {step === 'phone' && <span className="mr-2 text-ink-3">+7</span>}
-          {step === 'pin' ? <span className="tracking-[.4em]">{'●'.repeat(pin.length).padEnd(4, '○')}</span> : val ? (step === 'phone' ? fmtPhone(val) : <span className="tracking-[.4em]">{val}</span>) : <span className="text-ink-3">{step === 'phone' ? '700 000 00 00' : '• • • •'}</span>}
+          {step === 'pin' ? <span className="flex gap-3" aria-label={`Введено ${pin.length} из 4`}>{[0, 1, 2, 3].map((i) => <span key={i} className={`h-3.5 w-3.5 rounded-full ${i < pin.length ? 'bg-ink' : 'ring-2 ring-inset ring-ink-3/50'}`} />)}</span> : val ? (step === 'phone' ? fmtPhone(val) : <span className="tracking-[.4em]">{val}</span>) : <span className="text-ink-3">{step === 'phone' ? '700 000 00 00' : '• • • •'}</span>}
         </div>
         {err && <p className="mt-2 text-sm text-err">{err}</p>}
       </div>
@@ -76,7 +77,7 @@ export function Login() {
           {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'].map((d) =>
             d ? (
               <button key={d} onClick={() => press(d)} className="num h-12 rounded-xl bg-surface text-xl font-semibold active:bg-line">
-                {d}
+                {d === '⌫' ? <Delete size={22} className="mx-auto" aria-label="Стереть" /> : d}
               </button>
             ) : (
               <span key="e" />

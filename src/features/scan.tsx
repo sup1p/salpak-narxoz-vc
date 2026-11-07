@@ -49,9 +49,9 @@ export function Scan() {
       <div className="relative flex flex-1 flex-col items-center justify-center px-8">
         <div className="relative h-64 w-64">
           {/* corners */}
-          {['left-0 top-0 border-l-4 border-t-4 rounded-tl-3xl', 'right-0 top-0 border-r-4 border-t-4 rounded-tr-3xl', 'left-0 bottom-0 border-l-4 border-b-4 rounded-bl-3xl', 'right-0 bottom-0 border-r-4 border-b-4 rounded-br-3xl'].map((c) => (
-            <span key={c} className={`absolute h-12 w-12 ${found ? 'border-green' : 'border-gold'} ${c}`} />
-          ))}
+          <svg viewBox="0 0 256 256" className={`absolute inset-0 h-full w-full ${found ? 'text-green' : 'text-gold'}`} aria-hidden>
+            <path d="M2 50V26A24 24 0 0 1 26 2h24M206 2h24a24 24 0 0 1 24 24v24M254 206v24a24 24 0 0 1-24 24h-24M50 254H26A24 24 0 0 1 2 230v-24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+          </svg>
           {/* a faint QR silhouette */}
           <div className="absolute inset-10 grid grid-cols-7 gap-1 opacity-20" aria-hidden>
             {Array.from({ length: 49 }, (_, i) => (
@@ -60,7 +60,7 @@ export function Scan() {
           </div>
           {!found && (
             <motion.span
-              className="absolute inset-x-4 h-0.5 rounded-full bg-gold shadow-[0_0_12px_#F2AE3A]"
+              className="absolute inset-x-4 h-0.5 rounded-full bg-gold"
               initial={{ top: '12%' }}
               animate={{ top: ['12%', '88%', '12%'] }}
               transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { AlertTriangle, FastForward, Scale } from 'lucide-react'
+import { AlertTriangle, FastForward, Scale, Delete } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { BAR, RISK_FACTS, USDT_KZT } from '../data/seed'
@@ -338,7 +338,7 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
                 onClick={() => (d === 'Face ID' ? confirm() : pressPin(d))}
                 className={`num h-12 rounded-xl bg-surface font-semibold active:bg-line ${d === 'Face ID' ? 'text-xs' : 'text-xl'}`}
               >
-                {d}
+                {d === '⌫' ? <Delete size={22} className="mx-auto" aria-label="Стереть" /> : d}
               </button>
             ))}
           </div>
@@ -363,8 +363,8 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
       {/* US-1.3: three honest facts, once, before the first purchase */}
       <Sheet open={factsOpen} onClose={() => setFactsOpen(false)}>
         <div>
-          <div className="text-xs text-ink-3">Перед первой покупкой — один раз</div>
-          <div className="mt-1 text-[22px] font-bold">3 честных факта о золоте</div>
+          <div className="text-[22px] font-bold">3 честных факта о золоте</div>
+          <div className="mt-1 text-xs text-ink-3">Показываем один раз, перед первой покупкой</div>
           <div className="mt-3 divide-y divide-line">
             {RISK_FACTS.map((f, i) => (
               <div key={f.title} className="flex gap-3 py-3">

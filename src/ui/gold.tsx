@@ -116,7 +116,7 @@ export function MiningRain({ show, status }: { show: boolean; status: Status }) 
           {parts.map((p, i) => (
             <motion.span
               key={i}
-              className="gold-grad absolute top-0 rounded-[30%] shadow-[0_0_6px_rgba(220,168,110,.6)]"
+              className="gold-grad absolute top-0 rounded-[30%]"
               style={{ left: `${p.left}%`, width: p.size, height: p.size }}
               initial={{ y: -20, rotate: 0, opacity: 0 }}
               animate={{ y: 520, rotate: 200, opacity: [0, 1, 1, 0] }}

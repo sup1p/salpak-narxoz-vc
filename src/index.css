@@ -4,7 +4,7 @@
 @theme {
   --color-ink: #0B0B0C;
   --color-ink-2: #61656C;
-  --color-ink-3: #7F8085;
+  --color-ink-3: #696C73;
   --color-paper: #ffffff;
   --color-surface: #F4F4F6;
   --color-line: #E7E7EB;
@@ -20,7 +20,8 @@
   --color-lilac: #D9CCFF;
   --color-lime: #E4F76A;
   --color-peach: #FFD2B8;
-  --color-ok: #00AB75;
+  --color-ok: #007A55;
+  --color-green-ink: #007A55;
   --color-warn: #e8590c;
   --color-err: #D11F23;
   --font-display: 'Roboto Flex', system-ui, sans-serif;
@@ -70,9 +71,18 @@ body {
   font-weight: 700;
   letter-spacing: -0.02em;
 }
-.eyebrow {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-ink-2);
-}
 .gold-img { mix-blend-mode: multiply; display: block; }
+
+/* browser surfaces themed from the palette (impeccable craft floor) */
+::selection {
+  background: var(--color-gold-soft);
+  color: var(--color-ink);
+}
+body {
+  caret-color: var(--color-gold-deep);
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
