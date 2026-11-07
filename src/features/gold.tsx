@@ -20,7 +20,7 @@ export function Gold() {
     <div className="px-5 pb-28 pt-6">
       <h1 className="text-[28px] font-bold">Золото</h1>
 
-      <Card className="mt-4 flex items-center justify-between bg-white shadow-[0_0_0_1px_#E6E6EA]">
+      <Card className="mt-4 flex items-center justify-between bg-white shadow-[0_0_0_1px_#E7E7EB]">
         <div>
           <div className="text-sm text-ink-2">У тебя</div>
           <div className="num mt-1 text-[34px] font-bold leading-none">{formatGrams(s.gold)}</div>
@@ -66,7 +66,7 @@ export function Gold() {
             <div className="text-sm font-semibold">Где лежит твоё золото</div>
             <div className="mt-1 text-xs text-ink-2">Твоя доля в настоящем слитке</div>
           </div>
-          <Sticker bg="#C6F432" rotate={6} className="text-xs">
+          <Sticker bg="#00AB75" rotate={6} className="text-xs">
             аудит ✓
           </Sticker>
         </div>

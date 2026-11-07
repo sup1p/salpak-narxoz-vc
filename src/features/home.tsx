@@ -8,7 +8,7 @@ import { selectPortfolio, selectStatus, useBank } from '../store/useBank'
 import { GoldCapsule, MiningRain, Sticker } from '../ui/gold'
 import { Balance, Card, Toast } from '../ui/ui'
 
-const STATUS_BG = { sand: '#FFE9A6', nugget: '#F5B700', bar: '#C6F432' } as const
+const STATUS_BG = { sand: '#F6E7D3', nugget: '#DCA86E', bar: '#00AB75' } as const
 
 export function Home() {
   const nav = useNavigate()
@@ -48,7 +48,7 @@ export function Home() {
       <MiningRain show={rain} status={status} />
 
       <div className="flex items-center justify-between">
-        <div className="font-display text-xl font-bold uppercase tracking-wide">Altyn</div>
+        <div className="flex items-baseline gap-2"><span className="font-display text-xl font-bold uppercase tracking-wide">Altyn</span><span className="text-[11px] font-semibold text-green">by BCC</span></div>
         <Sticker bg={STATUS_BG[status]} rotate={4} className="text-xs">
           {STATUS_LABEL[status]}
         </Sticker>
@@ -68,7 +68,7 @@ export function Home() {
       </div>
 
       {/* Gold card */}
-      <Card className="relative mt-4 flex items-center justify-between bg-white shadow-[0_0_0_1px_#E6E6EA]" onClick={() => nav('/gold')}>
+      <Card className="relative mt-4 flex items-center justify-between bg-white shadow-[0_0_0_1px_#E7E7EB]" onClick={() => nav('/gold')}>
         <div>
           <div className="text-sm text-ink-2">Твоё золото</div>
           <div className="num mt-1 text-[32px] font-bold leading-none">{formatGrams(s.gold)}</div>

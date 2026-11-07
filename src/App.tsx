@@ -24,7 +24,7 @@ function TabBar() {
   const show = ['/home', '/gold', '/academy', '/profile'].includes(pathname)
   if (!show) return null
   return (
-    <nav className="absolute inset-x-4 bottom-4 z-30 flex h-16 items-center justify-between rounded-full bg-ink px-3 shadow-[0_8px_24px_rgba(11,11,15,.25)]">
+    <nav className="absolute inset-x-4 bottom-4 z-30 flex h-16 items-center justify-between rounded-full bg-ink px-3 shadow-[0_8px_24px_rgba(20,21,24,.25)]">
       {TABS.map((t, i) =>
         t === null ? (
           <button

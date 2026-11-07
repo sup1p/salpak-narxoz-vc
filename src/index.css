@@ -2,23 +2,24 @@
 
 /* Tokens — DESIGN-SYSTEM.md §2–4 */
 @theme {
-  --color-ink: #0b0b0f;
-  --color-ink-2: #5b5b66;
-  --color-ink-3: #9a9aa5;
+  --color-ink: #141518;
+  --color-ink-2: #61656C;
+  --color-ink-3: #7F8085;
   --color-paper: #ffffff;
-  --color-surface: #f3f3f5;
-  --color-line: #e6e6ea;
-  --color-gold: #f5b700;
-  --color-gold-soft: #ffe9a6;
-  --color-gold-light: #ffe27a;
-  --color-gold-deep: #c98a00;
+  --color-surface: #F5F5FA;
+  --color-line: #E7E7EB;
+  --color-gold: #DCA86E;
+  --color-gold-soft: #F6E7D3;
+  --color-gold-light: #F7E1B5;
+  --color-gold-deep: #C3904F;
   --color-sky-top: #7fb2ec;
   --color-sky-bottom: #dcebfa;
-  --color-lime: #c6f432;
-  --color-pink: #ff7ad9;
-  --color-ok: #1f9d55;
+  --color-green: #00AB75;
+  --color-green-dark: #27AE60;
+  --color-mint: #D2EEE5;
+  --color-ok: #00AB75;
   --color-warn: #e8590c;
-  --color-err: #d92d20;
+  --color-err: #D11F23;
   --font-display: 'Oswald', sans-serif;
   --font-sans: 'Inter', system-ui, sans-serif;
   --radius-card: 24px;
