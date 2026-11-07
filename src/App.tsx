@@ -1,122 +1,98 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { HashRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { BookOpen, Coins, Home as HomeIcon, Plus, User } from 'lucide-react'
+import { useBank } from './store/useBank'
+import { Intro, Login, RiskQuiz, TopUp } from './features/onboarding'
+import { Home } from './features/home'
+import { Gold } from './features/gold'
+import { TradeFlow } from './features/trade'
+import { Cashback } from './features/cashback'
+import { Academy, LessonScreen } from './features/academy'
+import { Profile, TaxReadiness, InviteGift, GiftReceived, PartnerConnect, Levels, History } from './features/profile'
 
-function App() {
-  const [count, setCount] = useState(0)
+const TABS = [
+  { to: '/home', icon: HomeIcon, label: 'Главная' },
+  { to: '/gold', icon: Coins, label: 'Золото' },
+  null,
+  { to: '/academy', icon: BookOpen, label: 'Академия' },
+  { to: '/profile', icon: User, label: 'Профиль' },
+] as const
 
+function TabBar() {
+  const { pathname } = useLocation()
+  const nav = useNavigate()
+  const show = ['/home', '/gold', '/academy', '/profile'].includes(pathname)
+  if (!show) return null
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <nav className="absolute inset-x-4 bottom-4 z-30 flex h-16 items-center justify-between rounded-full bg-ink px-3 shadow-[0_8px_24px_rgba(11,11,15,.25)]">
+      {TABS.map((t, i) =>
+        t === null ? (
+          <button
+            key={i}
+            aria-label="Купить золото"
+            onClick={() => nav('/buy')}
+            className="gold-grad -mt-8 grid h-14 w-14 place-items-center rounded-full border-4 border-paper text-ink shadow-lg active:scale-95"
+          >
+            <Plus strokeWidth={3} />
+          </button>
+        ) : (
+          <button
+            key={t.to}
+            onClick={() => nav(t.to)}
+            className={`flex h-12 min-w-14 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-[10px] font-medium ${pathname === t.to ? 'text-white' : 'text-white/45'}`}
+          >
+            <t.icon size={20} />
+            {t.label}
+          </button>
+        ),
+      )}
+    </nav>
   )
 }
 
-export default App
+function Guard({ children }: { children: React.ReactNode }) {
+  const onboarded = useBank((s) => s.onboarded)
+  return onboarded ? <>{children}</> : <Navigate to="/welcome" replace />
+}
+
+function Shell() {
+  const onboarded = useBank((s) => s.onboarded)
+  return (
+    <div className="flex min-h-full items-center justify-center sm:py-6">
+      <div className="relative h-[100dvh] w-full overflow-hidden bg-paper sm:h-[844px] sm:w-[390px] sm:rounded-[44px] sm:border-[10px] sm:border-ink sm:shadow-2xl">
+        <div className="no-scrollbar h-full overflow-y-auto">
+          <Routes>
+            <Route path="/" element={<Navigate to={onboarded ? '/home' : '/welcome'} replace />} />
+            <Route path="/welcome" element={<Intro />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/risk" element={<RiskQuiz />} />
+            <Route path="/topup" element={<TopUp />} />
+            <Route path="/gift" element={<GiftReceived />} />
+            <Route path="/home" element={<Guard><Home /></Guard>} />
+            <Route path="/gold" element={<Guard><Gold /></Guard>} />
+            <Route path="/buy" element={<Guard><TradeFlow side="buy" /></Guard>} />
+            <Route path="/sell" element={<Guard><TradeFlow side="sell" /></Guard>} />
+            <Route path="/cashback" element={<Guard><Cashback /></Guard>} />
+            <Route path="/academy" element={<Guard><Academy /></Guard>} />
+            <Route path="/academy/:id" element={<Guard><LessonScreen /></Guard>} />
+            <Route path="/profile" element={<Guard><Profile /></Guard>} />
+            <Route path="/tax" element={<Guard><TaxReadiness /></Guard>} />
+            <Route path="/invite" element={<Guard><InviteGift /></Guard>} />
+            <Route path="/partner" element={<Guard><PartnerConnect /></Guard>} />
+            <Route path="/levels" element={<Guard><Levels /></Guard>} />
+            <Route path="/history" element={<Guard><History /></Guard>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+        <TabBar />
+      </div>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <HashRouter>
+      <Shell />
+    </HashRouter>
+  )
+}
