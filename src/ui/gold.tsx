@@ -60,7 +60,7 @@ export function BarKeychain({ size = 120, className = '' }: { size?: number; cla
         999,9
       </text>
       <text x="50" y="98" textAnchor="middle" fontFamily="Oswald" fontWeight="600" fontSize="9" fill="#6B4A22">
-        ALTYN · 1 KG
+        GRAM · 1 KG
       </text>
     </svg>
   )

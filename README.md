@@ -1,4 +1,4 @@
-# Altyn — необанк для Digital Natives
+# GRAM by BCC — необанк для Digital Natives
 
 Прототип самостоятельного мобильного необанка (хакатон BCC Future Talent, Crypto Neobank Case): золото от 1000 ₸, кешбэк в граммах, прозрачная цена, Академия.
 

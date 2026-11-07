@@ -39,7 +39,7 @@ export function Login() {
     }
   }
   const val = step === 'phone' ? phone : step === 'otp' ? code : pin
-  const titles = { phone: 'Вход в Altyn', otp: 'Код из SMS', pin: 'Придумай PIN-код' }
+  const titles = { phone: 'Вход в GRAM', otp: 'Код из SMS', pin: 'Придумай PIN-код' }
   const fmtPhone = (p: string) => [p.slice(0, 3), p.slice(3, 6), p.slice(6, 8), p.slice(8, 10)].filter(Boolean).join(' ')
   const hints = {
     phone: 'Золото от 1000 ₸, кешбэк в граммах, прозрачная цена. Введи номер — пришлём код. Это тест, номер не проверяется.',
@@ -51,8 +51,8 @@ export function Login() {
       <Header back={false} />
       <div className="px-5">
         <div className="mb-5 flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-gold text-sm font-bold">A</span>
-          <span className="text-[15px] font-semibold">Altyn</span>
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-ink text-sm font-extrabold text-gold">G</span>
+          <span className="text-[15px] font-semibold">GRAM</span>
           <span className="text-xs font-semibold text-green">by BCC</span>
         </div>
         <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em]">{titles[step]}</h1>

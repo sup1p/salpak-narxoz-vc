@@ -332,7 +332,7 @@ export const useBank = create<BankState & Actions>()(
       reset: () => set(fresh()),
     }),
     {
-      name: 'altyn-demo',
+      name: 'gram-demo',
       version: 2,
       migrate: () => fresh() as never,
       storage: createJSONStorage(() => {

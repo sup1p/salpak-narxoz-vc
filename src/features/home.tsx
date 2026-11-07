@@ -72,7 +72,7 @@ export function Home() {
         <button onClick={() => nav('/more')} className="flex items-center gap-3 text-left">
           <span className="grid h-10 w-10 place-items-center rounded-full bg-gold text-base font-bold">А</span>
           <div>
-            <div className="text-[13px] text-ink-2">Altyn by BCC</div>
+            <div className="text-[13px] text-ink-2">GRAM by BCC</div>
             <div className="text-[17px] font-semibold leading-tight">Айгерим</div>
           </div>
         </button>
@@ -133,7 +133,7 @@ export function Home() {
         {/* accounts */}
         <SectionTitle>Счета</SectionTitle>
         <List>
-          <ListRow icon={CreditCard} title="Карта Altyn" sub="•• 2026" value={formatKzt(s.cardKzt, 0)} />
+          <ListRow icon={CreditCard} title="Карта GRAM" sub="•• 2026" value={formatKzt(s.cardKzt, 0)} />
           <ListRow icon={PiggyBank} title="Сбережения" sub="В тенге" value={formatKzt(s.savingsKzt, 0)} />
           {s.usdt > 0 && <ListRow icon={Repeat} title="USDT" sub="Хранение у кастодиана банка" value={`${formatNum(s.usdt, 2)} USDT`} valueSub={`≈ ${formatKzt(s.usdt * USDT_KZT, 0)}`} onClick={() => nav('/otc')} />}
           {s.partnerConnected && <ListRow icon={Repeat} title={PARTNER.name} sub="Хранится у партнёра, не у банка" value={`${PARTNER.usdt} USDT`} valueSub={`≈ ${formatKzt(partnerKzt, 0)}`} onClick={() => nav('/partner')} />}
