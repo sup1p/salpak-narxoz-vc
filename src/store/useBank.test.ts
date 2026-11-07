@@ -51,3 +51,51 @@ describe('bank store', () => {
     expect(s().cardKzt).toBe(48515)
   })
 })
+
+describe('system completion', () => {
+  it('tracks funnel events once', () => {
+    s().finishOnboarding()
+    s().finishOnboarding()
+    expect(s().events.filter((e) => e.name === 'activation')).toHaveLength(1)
+    s().confirm(quoteBuy(10000, M, 0), 1)
+    expect(s().events.some((e) => e.name === 'first_purchase')).toBe(true)
+    s().setCashbackMode('gold')
+    expect(s().events.some((e) => e.name === 'cashback_gold')).toBe(true)
+  })
+  it('records sandbox -> real conversion', () => {
+    s().setSandbox(true)
+    s().confirm(quoteBuy(10000, M, 0), 1)
+    s().setSandbox(false)
+    s().confirm(quoteBuy(5000, M, 0), 1)
+    expect(s().events.some((e) => e.name === 'sandbox_to_real')).toBe(true)
+  })
+  it('pays the referral bonus only after the friend buys, once', () => {
+    s().confirm(quoteBuy(10000, M, 0), 1)
+    s().sendGift(0.01, 'Данияр')
+    const g = s().gold
+    s().simulateFriendPurchase('Данияр')
+    s().simulateFriendPurchase('Данияр')
+    expect(s().gold).toBeCloseTo(g + 0.05, 6)
+    expect(s().invites[0].status).toBe('bought')
+  })
+  it('unlocks levels automatically', async () => {
+    const { selectLevel } = await import('./useBank')
+    expect(selectLevel(s())).toBe('start')
+    s().confirm(quoteBuy(10000, M, 0), 1)
+    s().completeLesson('spread')
+    s().completeLesson('custody')
+    expect(selectLevel(s())).toBe('saver')
+  })
+  it('buys and sells USDT on the card', () => {
+    expect(s().confirm(quoteBuy(10000, 520, 0, 'usdt'), 1)).toBeNull()
+    expect(s().usdt).toBe(19.04)
+    expect(s().cardKzt).toBe(40000)
+    expect(s().confirm(quoteSell(10, 520, 0, 'usdt'), 1)).toBeNull()
+    expect(s().usdt).toBe(9.04)
+  })
+  it('counts top-ups toward the regularity streak', async () => {
+    const { selectRegular } = await import('./useBank')
+    s().topUp(1000)
+    expect(selectRegular(s())).toBe(1)
+  })
+})

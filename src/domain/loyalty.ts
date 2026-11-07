@@ -7,9 +7,31 @@ export const BAR_FROM = 500_000
 export const BAR_REGULAR_MONTHS = 2
 export const MONTHLY_CAP_KZT = 5000
 
-/** Bank-held portfolio only: card + savings + gold. Partner assets are excluded. */
-export function portfolioKzt(s: { cardKzt: number; savingsKzt: number; gold: number }, market: number): number {
-  return s.cardKzt + s.savingsKzt + s.gold * market
+/** Bank-held portfolio only: card + savings + gold (+ USDT held in bank custody). Partner assets are excluded. */
+export function portfolioKzt(
+  s: { cardKzt: number; savingsKzt: number; gold: number; usdt?: number },
+  market: number,
+  usdtRate = 0,
+): number {
+  return s.cardKzt + s.savingsKzt + s.gold * market + (s.usdt ?? 0) * usdtRate
+}
+
+/** 'YYYY-MM' of a timestamp. */
+export const monthKey = (t: number) => {
+  const d = new Date(t)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+/** Consecutive months with a top-up, counting back from the month of `now`. */
+export function regularStreak(topupMonths: string[], now: number): number {
+  const set = new Set(topupMonths)
+  const d = new Date(now)
+  let n = 0
+  while (set.has(monthKey(d.getTime()))) {
+    n++
+    d.setMonth(d.getMonth() - 1)
+  }
+  return n
 }
 
 export function statusFor(portfolio: number, regularMonths: number): Status {

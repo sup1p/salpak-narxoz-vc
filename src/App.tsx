@@ -2,13 +2,14 @@ import { useEffect, useRef } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { BookOpen, Coins, Home as HomeIcon, Plus, User } from 'lucide-react'
 import { useBank } from './store/useBank'
-import { Intro, Login, RiskQuiz, TopUp } from './features/onboarding'
+import { Login } from './features/onboarding'
 import { Home } from './features/home'
 import { Gold } from './features/gold'
 import { TradeFlow } from './features/trade'
 import { Cashback } from './features/cashback'
 import { Academy, LessonScreen } from './features/academy'
 import { Profile, TaxReadiness, InviteGift, GiftReceived, PartnerConnect, Levels, History } from './features/profile'
+import { Metrics } from './features/metrics'
 
 const TABS = [
   { to: '/home', icon: HomeIcon, label: 'Главная' },
@@ -62,21 +63,29 @@ function Shell() {
   useEffect(() => {
     scroller.current?.scrollTo(0, 0)
   }, [pathname])
+  // ТЗ п.5 «возвраты»: a later visit counts as D1 / D7 return
+  useEffect(() => {
+    const st = useBank.getState()
+    if (!st.onboarded) return
+    const days = (Date.now() - st.installedAt) / 86400000
+    if (days >= 1) st.track('return_d1')
+    if (days >= 7) st.track('return_d7')
+  }, [])
   return (
     <div className="flex min-h-full items-center justify-center sm:py-6">
       <div className="relative h-[100dvh] w-full overflow-hidden bg-paper sm:h-[min(844px,calc(100dvh-48px))] sm:w-[390px] sm:rounded-[44px] sm:border-[10px] sm:border-ink sm:shadow-2xl">
         <div ref={scroller} className="no-scrollbar h-full overflow-y-auto">
           <Routes>
             <Route path="/" element={<Navigate to={onboarded ? '/home' : '/welcome'} replace />} />
-            <Route path="/welcome" element={<Intro />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/risk" element={<RiskQuiz />} />
-            <Route path="/topup" element={<TopUp />} />
+            <Route path="/welcome" element={<Login />} />
             <Route path="/gift" element={<GiftReceived />} />
             <Route path="/home" element={<Guard><Home /></Guard>} />
             <Route path="/gold" element={<Guard><Gold /></Guard>} />
             <Route path="/buy" element={<Guard><TradeFlow side="buy" /></Guard>} />
             <Route path="/sell" element={<Guard><TradeFlow side="sell" /></Guard>} />
+            <Route path="/otc" element={<Guard><TradeFlow side="buy" asset="usdt" /></Guard>} />
+            <Route path="/otc/sell" element={<Guard><TradeFlow side="sell" asset="usdt" /></Guard>} />
+            <Route path="/metrics" element={<Guard><Metrics /></Guard>} />
             <Route path="/cashback" element={<Guard><Cashback /></Guard>} />
             <Route path="/academy" element={<Guard><Academy /></Guard>} />
             <Route path="/academy/:id" element={<Guard><LessonScreen /></Guard>} />
