@@ -134,7 +134,7 @@ export function Home() {
         <SectionTitle>Счета</SectionTitle>
         <List>
           <ListRow icon={CreditCard} title="Карта GRAM" sub="•• 2026" value={formatKzt(s.cardKzt, 0)} />
-          <ListRow icon={PiggyBank} title="Сбережения" sub="В тенге" value={formatKzt(s.savingsKzt, 0)} />
+          <ListRow icon={PiggyBank} title="Сбережения" sub="Вклад в ₸ · 14% годовых" value={formatKzt(s.savingsKzt, 0)} onClick={() => nav('/savings')} />
           {s.usdt > 0 && <ListRow icon={Repeat} title="USDT" sub="Хранение у кастодиана банка" value={`${formatNum(s.usdt, 2)} USDT`} valueSub={`≈ ${formatKzt(s.usdt * USDT_KZT, 0)}`} onClick={() => nav('/otc')} />}
           {s.bankLinks.map((b) => (
             <ListRow key={b.id} icon={Landmark} title={b.bank} sub="В другом банке · только просмотр" value={formatKzt(b.balanceKzt, 0)} onClick={() => nav('/banks')} />

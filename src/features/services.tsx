@@ -1,6 +1,6 @@
-import { ArrowLeftRight, Landmark, Receipt, BookOpen, Coins, FileText, Gift, Link2, Lock, Sparkles, type LucideIcon } from 'lucide-react'
+import { ArrowLeftRight, Landmark, Receipt, BookOpen, Coins, FileText, Gift, Link2, Lock, PiggyBank, Sparkles, type LucideIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { formatGrams, formatNum } from '../domain/money'
+import { formatGrams, formatKzt, formatNum } from '../domain/money'
 import { selectInvestorAccess, useBank } from '../store/useBank'
 import { PageTitle, SectionTitle, TabPage } from '../ui/ui'
 
@@ -46,6 +46,7 @@ export function Services() {
     {
       title: 'Накопления',
       tiles: [
+        { to: '/savings', icon: PiggyBank, tint: 'bg-mint', title: 'Сбережения', sub: `${formatKzt(s.savingsKzt, 0)} · 14% годовых` },
         { to: '/gold', icon: Coins, tint: 'bg-gold', title: 'Золото', sub: `${formatGrams(s.gold)} · от 1000 ₸` },
         { to: '/otc', icon: ArrowLeftRight, tint: 'bg-mint', title: 'Обмен ₸ ↔ USDT', sub: investor ? (s.usdt ? `${formatNum(s.usdt, 2)} USDT` : 'По котировке') : 'Нужен тест на понимание рисков', locked: !investor },
       ],

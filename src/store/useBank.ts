@@ -4,8 +4,9 @@ import { INITIAL, MARKET_PRICE, USDT_KZT } from '../data/seed'
 import { MIN_BUY, type Receipt } from '../domain/pricing'
 import { cashbackKzt, monthKey, portfolioKzt, regularStreak, statusFor, statusPortfolioKzt } from '../domain/loyalty'
 import { round } from '../domain/money'
+import { DAY_MS, daysSince, rewardGrams, savingsReward } from '../domain/savings'
 
-export type OpType = 'topup' | 'buy' | 'sell' | 'cashback' | 'gift_out' | 'bonus' | 'purchase'
+export type OpType = 'topup' | 'buy' | 'sell' | 'cashback' | 'gift_out' | 'bonus' | 'purchase' | 'interest' | 'transfer'
 export interface Op {
   id: string
   type: OpType
@@ -76,6 +77,10 @@ export interface BankState {
   market: number
   cardKzt: number
   savingsKzt: number
+  /** how the savings reward is paid: ₸ to savings or grams of gold (CONCEPT §5.15) */
+  savingsPayout: 'kzt' | 'gold'
+  /** last day the savings reward was accrued */
+  savingsAccruedAt: number
   gold: number
   avgPrice: number
   usdt: number
@@ -99,6 +104,8 @@ export interface BankState {
   events: Evt[]
   installedAt: number
   messagesReadAt: number
+  /** per-topic read marks for the Kaspi-style message topics */
+  topicReadAt: Record<string, number>
   extCards: ExtCard[]
   bankLinks: BankLink[]
   history: Op[]
@@ -131,6 +138,11 @@ interface Actions {
   track(name: EventName, at?: number): void
   simulateReturn(days: number): void
   markMessagesRead(): void
+  markTopicRead(topic: string): void
+  moveSavings(kzt: number, dir: 'in' | 'out'): OpError | null
+  setSavingsPayout(m: 'kzt' | 'gold'): void
+  accrueSavings(now?: number): void
+  skipSavingsDays(days: number): void
   reset(): void
 }
 
@@ -148,6 +160,8 @@ const fresh = (): BankState => {
     market: MARKET_PRICE,
     cardKzt: INITIAL.cardKzt,
     savingsKzt: INITIAL.savingsKzt,
+    savingsPayout: 'kzt',
+    savingsAccruedAt: now,
     gold: INITIAL.gold,
     avgPrice: INITIAL.avgPrice,
     usdt: 0,
@@ -168,6 +182,7 @@ const fresh = (): BankState => {
     events: [{ name: 'install', at: now }],
     installedAt: now,
     messagesReadAt: 0,
+    topicReadAt: {},
     extCards: [{ id: 'card-4821', last4: '4821' }],
     bankLinks: [],
     history: [],
@@ -374,6 +389,55 @@ export const useBank = create<BankState & Actions>()(
       debitBank: (id, kzt) => set((s) => ({ bankLinks: s.bankLinks.map((b) => (b.id === id ? { ...b, balanceKzt: b.balanceKzt - kzt } : b)) })),
       revokeBank: (id) => set((s) => ({ bankLinks: s.bankLinks.filter((b) => b.id !== id) })),
       markMessagesRead: () => set({ messagesReadAt: Date.now() }),
+      markTopicRead: (topic) => set((s) => ({ topicReadAt: { ...s.topicReadAt, [topic]: Date.now() } })),
+
+      // Сбережения: own-account transfers, no fee, no limits in the prototype
+      moveSavings: (kzt, dir) => {
+        const s = get()
+        if (!(kzt > 0)) return 'BELOW_MIN'
+        if (dir === 'in' ? kzt > s.cardKzt : kzt > s.savingsKzt) return 'INSUFFICIENT_FUNDS'
+        get().accrueSavings()
+        const sign = dir === 'in' ? 1 : -1
+        set((st) => ({
+          cardKzt: round(st.cardKzt - sign * kzt, 2),
+          savingsKzt: round(st.savingsKzt + sign * kzt, 2),
+          history: [{ id: opId(), type: 'transfer', title: dir === 'in' ? 'На сбережения' : 'Со сбережений на карту', kzt: -sign * kzt, grams: 0, at: Date.now() }, ...st.history],
+        }))
+        return null
+      },
+      setSavingsPayout: (m) => {
+        get().accrueSavings()
+        set({ savingsPayout: m })
+      },
+      // reward accrues per full day on the ₸ balance; paid in ₸ or as grams at the market price
+      accrueSavings: (now = Date.now()) => {
+        const s = get()
+        const days = daysSince(s.savingsAccruedAt, now)
+        if (days < 1) return
+        const reward = savingsReward(s.savingsKzt, days)
+        const at = s.savingsAccruedAt + days * DAY_MS
+        if (reward <= 0) return set({ savingsAccruedAt: at })
+        if (s.savingsPayout === 'gold') {
+          const g = rewardGrams(reward, s.market)
+          const newGold = round(s.gold + g, 6)
+          return set({
+            savingsAccruedAt: at,
+            gold: newGold,
+            avgPrice: (s.avgPrice * s.gold + s.market * g) / newGold,
+            history: [{ id: opId(), type: 'interest', asset: 'gold', title: 'Вознаграждение по сбережениям', kzt: 0, grams: g, at: now }, ...s.history],
+          })
+        }
+        set({
+          savingsAccruedAt: at,
+          savingsKzt: round(s.savingsKzt + reward, 2),
+          history: [{ id: opId(), type: 'interest', title: 'Вознаграждение по сбережениям', kzt: reward, grams: 0, at: now }, ...s.history],
+        })
+      },
+      // demo: pretend `days` have passed since the last accrual
+      skipSavingsDays: (days) => {
+        set((s) => ({ savingsAccruedAt: s.savingsAccruedAt - days * DAY_MS }))
+        get().accrueSavings()
+      },
       reset: () => set(fresh()),
     }),
     {

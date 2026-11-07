@@ -5,7 +5,7 @@ import { selectCashbackStats, useBank, type Op } from '../store/useBank'
 import { Header, List, ListRow, Screen, Sheet } from '../ui/ui'
 import { OpDetail, opAmounts, opIcon } from './opView'
 
-type Filter = 'all' | 'payments' | 'gold' | 'cashback' | 'topup' | 'usdt'
+type Filter = 'all' | 'payments' | 'gold' | 'cashback' | 'topup' | 'savings' | 'usdt'
 
 /** Gold filter = every movement of gold grams: buys, sells, gold cashback, bonuses (review fix). */
 const match = (o: Op, f: Filter) =>
@@ -14,6 +14,7 @@ const match = (o: Op, f: Filter) =>
   (f === 'gold' && o.asset !== 'usdt' && o.grams !== 0) ||
   (f === 'cashback' && o.type === 'cashback') ||
   (f === 'topup' && o.type === 'topup') ||
+  (f === 'savings' && (o.type === 'interest' || o.type === 'transfer')) ||
   (f === 'usdt' && o.asset === 'usdt')
 
 const dayLabel = (t: number) => {
@@ -43,6 +44,7 @@ export function Operations() {
     { id: 'gold', label: 'Золото' },
     { id: 'cashback', label: 'Кешбэк' },
     { id: 'topup', label: 'Пополнения' },
+    { id: 'savings', label: 'Сбережения' },
     ...(hasUsdt ? [{ id: 'usdt' as const, label: 'USDT' }] : []),
   ]
 

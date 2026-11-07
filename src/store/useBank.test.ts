@@ -158,3 +158,29 @@ describe('cashback stats', () => {
     expect(st.monthTotalKzt).toBeCloseTo(45, 0)
   })
 })
+
+describe('savings (CONCEPT §5.15)', () => {
+  it('moves money between card and savings and logs both ways', () => {
+    expect(s().moveSavings(7000, 'in')).toBeNull()
+    expect(s().cardKzt).toBe(43000)
+    expect(s().savingsKzt).toBe(20000)
+    expect(s().moveSavings(5000, 'out')).toBeNull()
+    expect(s().savingsKzt).toBe(15000)
+    expect(s().history.map((o) => o.type)).toEqual(['transfer', 'transfer'])
+    expect(s().moveSavings(999999, 'out')).toBe('INSUFFICIENT_FUNDS')
+  })
+  it('pays the reward in ₸ to savings for full days', () => {
+    s().skipSavingsDays(30)
+    expect(s().savingsKzt).toBe(13149.59)
+    expect(s().history[0]).toMatchObject({ type: 'interest', kzt: 149.59 })
+    s().accrueSavings()
+    expect(s().history.filter((o) => o.type === 'interest')).toHaveLength(1)
+  })
+  it('pays the same reward as grams when gold payout is chosen', () => {
+    s().setSavingsPayout('gold')
+    s().skipSavingsDays(30)
+    expect(s().savingsKzt).toBe(13000)
+    expect(s().gold).toBeCloseTo(0.00273, 6)
+    expect(s().history[0]).toMatchObject({ type: 'interest', asset: 'gold' })
+  })
+})
