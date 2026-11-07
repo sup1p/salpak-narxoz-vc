@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Tokens — DESIGN-SYSTEM.md §2–4 */
+/* Tokens — DESIGN-SYSTEM.md §2 (BCC colors) + §12 (Gold Apple-style) */
 @theme {
   --color-ink: #141518;
   --color-ink-2: #61656C;
@@ -20,10 +20,10 @@
   --color-ok: #00AB75;
   --color-warn: #e8590c;
   --color-err: #D11F23;
-  --font-display: 'Oswald', sans-serif;
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --radius-card: 24px;
-  --radius-field: 16px;
+  --font-display: 'Roboto Flex', system-ui, sans-serif;
+  --font-sans: 'Roboto Flex', system-ui, sans-serif;
+  --radius-card: 4px;
+  --radius-field: 2px;
 }
 
 html,
@@ -60,3 +60,24 @@ body {
     transition: none !important;
   }
 }
+
+/* §12 Gold Apple-style ------------------------------------------------- */
+/* display headings: bold grotesk in lowercase, tight tracking */
+.font-display {
+  font-family: var(--font-sans);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  text-transform: lowercase !important;
+}
+/* small uppercase overline: «НОВИНКИ», «ТОКЕН ЗОЛОТА · 999,9» */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-2);
+}
+/* sharp corners everywhere except true circles */
+.rounded-\[24px\], .rounded-\[16px\], .rounded-2xl, .rounded-xl, .rounded-\[22px\] { border-radius: 4px !important; }
+.rounded-t-\[32px\] { border-top-left-radius: 8px !important; border-top-right-radius: 8px !important; }
+.gold-img { mix-blend-mode: multiply; display: block; }
