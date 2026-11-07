@@ -1,6 +1,7 @@
 export type Status = 'sand' | 'nugget' | 'bar'
 
-export const STATUS_LABEL: Record<Status, string> = { sand: 'Песчинка', nugget: 'Самородок', bar: 'Слиток' }
+/** One progress ladder only (review 2026-11-07); names don't clash with gold stages (pinch/pile/bar). */
+export const STATUS_LABEL: Record<Status, string> = { sand: 'Базовый', nugget: 'Плюс', bar: 'Макс' }
 export const CASHBACK_RATE: Record<Status, number> = { sand: 0.01, nugget: 0.015, bar: 0.02 }
 export const NUGGET_FROM = 100_000
 export const BAR_FROM = 500_000
@@ -14,6 +15,17 @@ export function portfolioKzt(
   usdtRate = 0,
 ): number {
   return s.cardKzt + s.savingsKzt + s.gold * market + (s.usdt ?? 0) * usdtRate
+}
+
+/**
+ * Portfolio used for the loyalty status: tenge balances + gold at its PURCHASE cost (+ bank-held USDT).
+ * Market moves never change the status (review 2026-11-07).
+ */
+export function statusPortfolioKzt(
+  s: { cardKzt: number; savingsKzt: number; gold: number; avgPrice: number; usdt?: number },
+  usdtRate = 0,
+): number {
+  return s.cardKzt + s.savingsKzt + s.gold * s.avgPrice + (s.usdt ?? 0) * usdtRate
 }
 
 /** 'YYYY-MM' of a timestamp. */

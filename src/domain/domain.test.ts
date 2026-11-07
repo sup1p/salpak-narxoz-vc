@@ -23,19 +23,22 @@ describe('pricing', () => {
   it('quotes a 10 000 ₸ buy (CONCEPT §6)', () => {
     const r = quoteBuy(10000, M, 0)
     expect(r.price).toBe(55074)
-    expect(r.fee).toBe(50)
-    expect(r.grams).toBe(0.1807)
+    expect(r.fee).toBe(30)
+    expect(r.grams).toBe(0.181)
     expect(r.totalKzt).toBe(10000)
     expect(r.expiresAt).toBe(QUOTE_TTL_MS)
   })
-  it('uses 0.3% fee above the 50 ₸ minimum', () => {
+  it('charges 0.3% with no minimum — a 1 000 ₸ buy stays ≈0.8% over market', async () => {
     expect(quoteBuy(100000, M, 0).fee).toBe(300)
+    expect(quoteBuy(1000, M, 0).fee).toBe(3)
+    const { overMarketPct } = await import('./pricing')
+    expect(overMarketPct(quoteBuy(1000, M, 0))).toBeLessThan(0.009)
   })
   it('quotes a 0.1 g sell', () => {
     const r = quoteSell(0.1, M, 0)
     expect(r.price).toBe(54526)
-    expect(r.fee).toBe(50)
-    expect(r.totalKzt).toBe(5402.6)
+    expect(r.fee).toBe(16.4)
+    expect(r.totalKzt).toBe(5436.2)
   })
 })
 
@@ -61,8 +64,8 @@ describe('usdt and regularity', () => {
     const r = quoteBuy(10000, 520, 0, 'usdt')
     expect(r.asset).toBe('usdt')
     expect(r.price).toBe(522.6)
-    expect(r.grams).toBe(19.04)
-    expect(quoteSell(10, 520, 0, 'usdt').totalKzt).toBe(5124)
+    expect(r.grams).toBe(19.08)
+    expect(quoteSell(10, 520, 0, 'usdt').totalKzt).toBe(5158.5)
   })
   it('counts consecutive top-up months', async () => {
     const { regularStreak } = await import('./loyalty')
@@ -73,5 +76,14 @@ describe('usdt and regularity', () => {
   })
   it('includes bank-held USDT in the portfolio', () => {
     expect(portfolioKzt({ cardKzt: 0, savingsKzt: 0, gold: 0, usdt: 10 }, 54800, 520)).toBe(5200)
+  })
+})
+
+describe('status by purchase cost', () => {
+  it('does not move when the gold price moves', async () => {
+    const { statusPortfolioKzt } = await import('./loyalty')
+    const base = { cardKzt: 90000, savingsKzt: 0, gold: 0.2, avgPrice: 50000 }
+    expect(statusPortfolioKzt(base)).toBe(100000)
+    expect(statusFor(statusPortfolioKzt(base), 0)).toBe('nugget')
   })
 })
