@@ -16,7 +16,8 @@ type Step = 'input' | 'quote' | 'expired' | 'success'
 const fu = (asset: Asset, v: number) => (asset === 'gold' ? formatGrams(v) : `${formatNum(v, 2)} USDT`)
 const per = (asset: Asset) => (asset === 'gold' ? '₸/г' : '₸/USDT')
 
-function ReceiptView({ r, onTerm }: { r: Receipt; onTerm: (id: string) => void }) {
+/** «Рентген цены»: what the price is made of (CONCEPT §5.3). Also opened from Операции. */
+export function ReceiptView({ r, onTerm }: { r: Receipt; onTerm: (id: string) => void }) {
   const buy = r.side === 'buy'
   const d = r.asset === 'gold' ? 0 : 1
   return (
@@ -36,6 +37,7 @@ function ReceiptView({ r, onTerm }: { r: Receipt; onTerm: (id: string) => void }
           <Row label="Получишь на карту" value={formatKzt(r.totalKzt)} strong />
         </>
       )}
+      <Row label="Сверх рынка (спред + комиссия)" onLabel={() => onTerm('spread')} value={`≈ ${formatKzt(Math.abs(buy ? r.amountKzt - r.grams * r.market : r.grams * r.market - r.totalKzt), 0)}`} />
       <Row label="Хранитель" onLabel={() => onTerm(r.asset === 'gold' ? 'custody' : 'aifc')} value={BAR.custodian} />
     </div>
   )
@@ -215,7 +217,7 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
             <TimerRing left={left} />
           </div>
           <Card className="mt-4">
-            <div className="mb-1 text-sm font-semibold">Из чего цена</div>
+            <div className="mb-1 text-sm font-semibold">Рентген цены · из чего она сложилась</div>
             <ReceiptView r={r} onTerm={goTerm} />
           </Card>
           <div className="mt-3 flex gap-3 rounded-[16px] bg-gold-soft p-4 text-sm">
@@ -271,7 +273,7 @@ export function TradeFlow({ side, asset = 'gold' }: { side: Side; asset?: Asset 
           <h1 className="mt-5 text-[32px] font-bold leading-none tracking-[-0.02em]">{buy ? `+${fu(asset, r.grams)}` : `+${formatKzt(r.totalKzt)}`}</h1>
           <p className="mt-2 text-ink-2">{buy ? (sandbox ? 'Это была проба — реальные деньги не тронуты.' : isGold ? 'Золото уже в твоей копилке.' : 'USDT зачислены на счёт в GRAM.') : 'Деньги уже на карте.'}</p>
           <Card className="mt-5 w-full text-left">
-            <div className="mb-1 text-sm font-semibold">Чек · Из чего цена</div>
+            <div className="mb-1 text-sm font-semibold">Чек · Рентген цены</div>
             <ReceiptView r={r} onTerm={goTerm} />
           </Card>
           <div className="mt-auto w-full space-y-2 pb-6 pt-4">

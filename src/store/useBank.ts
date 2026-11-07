@@ -407,3 +407,38 @@ export function previewCashback(s: BankState, spendKzt: number): { kzt: number; 
   const kzt = cashbackKzt(spendKzt, selectStatus(s), used)
   return { kzt, grams: kzt / s.market }
 }
+
+export interface CashbackStats {
+  monthKzt: number
+  monthGrams: number
+  /** ₸ + grams at the current price */
+  monthTotalKzt: number
+  totalKzt: number
+  totalGrams: number
+  totalAllKzt: number
+  usedKzt: number
+  capKzt: number
+}
+
+/** Cashback earned (US-13.4): this month and all time, both modes, plus the monthly cap usage. */
+export function selectCashbackStats(s: BankState, now = Date.now()): CashbackStats {
+  const month = monthKey(now)
+  const cb = s.history.filter((o) => o.type === 'cashback')
+  // the seeded 'past purchases' cashback is starting balance, not this month's earning
+  const inMonth = cb.filter((o) => o.id !== 'seed-cb' && monthKey(o.at) === month)
+  const sum = (xs: Op[], f: (o: Op) => number) => xs.reduce((a, o) => a + f(o), 0)
+  const monthKzt = sum(inMonth, (o) => o.kzt)
+  const monthGrams = sum(inMonth, (o) => o.grams)
+  const totalKzt = sum(cb, (o) => o.kzt)
+  const totalGrams = sum(cb, (o) => o.grams)
+  return {
+    monthKzt,
+    monthGrams,
+    monthTotalKzt: monthKzt + monthGrams * s.market,
+    totalKzt,
+    totalGrams,
+    totalAllKzt: totalKzt + totalGrams * s.market,
+    usedKzt: s.cashbackMonth === month ? s.cashbackUsedKzt : 0,
+    capKzt: 5000,
+  }
+}

@@ -1,8 +1,10 @@
 import { ArrowDownLeft, ArrowUpRight, Coffee, Coins, Gift, Repeat, Sparkles, type LucideIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { ReceiptView } from './trade'
 import { formatKzt, formatNum } from '../domain/money'
-import { useBank, type Op } from '../store/useBank'
-import { List, ListRow, PageTitle, TabPage } from '../ui/ui'
+import { selectCashbackStats, useBank, type Op } from '../store/useBank'
+import { List, ListRow, PageTitle, Sheet, TabPage } from '../ui/ui'
 
 type Filter = 'all' | 'gold' | 'cashback' | 'topup' | 'usdt'
 const FILTERS: { id: Filter; label: string }[] = [
@@ -48,13 +50,16 @@ const amount = (o: Op) => {
 
 /** «Операции» tab: month summary, filter chips, list grouped by day (DESIGN-SYSTEM §13). */
 export function Operations() {
-  const history = useBank((s) => s.history)
-  const [f, setF] = useState<Filter>('all')
+  const s = useBank()
+  const history = s.history
+  const [params] = useSearchParams()
+  const [f, setF] = useState<Filter>((params.get('f') as Filter) || 'all')
+  const [open, setOpen] = useState<Op | null>(null)
+  const cbStats = selectCashbackStats(s)
   const month = new Date().getMonth()
   const inMonth = history.filter((o) => new Date(o.at).getMonth() === month)
   const spent = inMonth.filter((o) => o.type === 'purchase').reduce((a, o) => a - o.kzt, 0)
   const goldBought = inMonth.filter((o) => o.type === 'buy' && o.asset !== 'usdt').reduce((a, o) => a + o.grams, 0)
-  const cashback = inMonth.filter((o) => o.type === 'cashback').reduce((a, o) => a + (o.grams || 0), 0)
 
   const groups = useMemo(() => {
     const m = new Map<string, Op[]>()
@@ -73,11 +78,12 @@ export function Operations() {
           {[
             { k: 'Покупки картой', v: formatKzt(spent, 0) },
             { k: 'Куплено золота', v: `${formatNum(goldBought, 4)} г` },
-            { k: 'Кешбэк золотом', v: `${formatNum(cashback, 4)} г` },
+            { k: 'Кешбэк', v: `+${formatKzt(cbStats.monthTotalKzt, 0)}`, sub: cbStats.monthGrams ? `${formatNum(cbStats.monthGrams, 4)} г золотом` : undefined },
           ].map((x) => (
             <div key={x.k} className="rounded-2xl bg-surface p-3">
               <div className="text-xs text-ink-2">{x.k}</div>
               <div className="num mt-1 text-[15px] font-semibold">{x.v}</div>
+              {'sub' in x && x.sub && <div className="num text-[11px] text-ink-3">{x.sub}</div>}
             </div>
           ))}
         </div>
@@ -112,6 +118,7 @@ export function Operations() {
                     sub={new Date(o.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                     value={a}
                     valueSub={b}
+                    onClick={o.receipt ? () => setOpen(o) : undefined}
                   />
                 )
               })}
@@ -119,6 +126,17 @@ export function Operations() {
           </div>
         ))}
       </div>
+      <Sheet open={!!open} onClose={() => setOpen(null)}>
+        {open?.receipt && (
+          <div>
+            <div className="text-[19px] font-bold">{open.title}</div>
+            <div className="text-xs text-ink-2">{new Date(open.at).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</div>
+            <div className="mt-3 rounded-2xl bg-surface px-4 py-2">
+              <ReceiptView r={open.receipt} onTerm={() => setOpen(null)} />
+            </div>
+          </div>
+        )}
+      </Sheet>
     </TabPage>
   )
 }

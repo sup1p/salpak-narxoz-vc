@@ -55,7 +55,7 @@ export function Card({ children, className = '', onClick, tone = 'surface' }: { 
 export function Header({ title, back = true, right }: { title?: string; back?: boolean; right?: ReactNode }) {
   const nav = useNavigate()
   return (
-    <div className="grid h-14 grid-cols-[44px_1fr_44px] items-center px-3">
+    <div className="grid h-14 grid-cols-[76px_1fr_76px] items-center px-3">
       {back ? (
         <button aria-label="Назад" onClick={() => nav(-1)} className="grid h-11 w-11 place-items-center rounded-full active:bg-surface">
           <ChevronLeft />
@@ -64,7 +64,7 @@ export function Header({ title, back = true, right }: { title?: string; back?: b
         <span />
       )}
       <div className="truncate text-center text-[16px] font-semibold">{title}</div>
-      <div className="grid place-items-center">{right}</div>
+      <div className="flex justify-end">{right}</div>
     </div>
   )
 }

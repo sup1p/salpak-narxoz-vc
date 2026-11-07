@@ -138,3 +138,17 @@ describe('payments', () => {
     expect(p.kzt).toBe(30)
   })
 })
+
+describe('cashback stats', () => {
+  it('sums tenge and gold cashback for the month and tracks the cap', async () => {
+    const { selectCashbackStats } = await import('./useBank')
+    s().payCard(1500, 'Кофе') // 15 ₸ in tenge mode
+    s().setCashbackMode('gold')
+    s().payCard(3000, 'Связь') // 30 ₸ as grams
+    const st = selectCashbackStats(s())
+    expect(st.monthKzt).toBe(15)
+    expect(st.monthGrams).toBeCloseTo(30 / 54800, 6)
+    expect(st.usedKzt).toBe(45)
+    expect(st.monthTotalKzt).toBeCloseTo(45, 0)
+  })
+})
