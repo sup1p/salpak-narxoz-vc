@@ -1,0 +1,61 @@
+@import 'tailwindcss';
+
+/* Tokens — DESIGN-SYSTEM.md §2–4 */
+@theme {
+  --color-ink: #0b0b0f;
+  --color-ink-2: #5b5b66;
+  --color-ink-3: #9a9aa5;
+  --color-paper: #ffffff;
+  --color-surface: #f3f3f5;
+  --color-line: #e6e6ea;
+  --color-gold: #f5b700;
+  --color-gold-soft: #ffe9a6;
+  --color-gold-light: #ffe27a;
+  --color-gold-deep: #c98a00;
+  --color-sky-top: #7fb2ec;
+  --color-sky-bottom: #dcebfa;
+  --color-lime: #c6f432;
+  --color-pink: #ff7ad9;
+  --color-ok: #1f9d55;
+  --color-warn: #e8590c;
+  --color-err: #d92d20;
+  --font-display: 'Oswald', sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --radius-card: 24px;
+  --radius-field: 16px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: #e9e9ee;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
+.sky {
+  background:
+    radial-gradient(ellipse 60% 25% at 20% 30%, rgba(255, 255, 255, 0.85), transparent 70%),
+    radial-gradient(ellipse 50% 18% at 80% 55%, rgba(255, 255, 255, 0.7), transparent 70%),
+    radial-gradient(ellipse 70% 20% at 40% 85%, rgba(255, 255, 255, 0.6), transparent 70%),
+    linear-gradient(180deg, var(--color-sky-top), var(--color-sky-bottom));
+}
+.gold-grad {
+  background: linear-gradient(135deg, var(--color-gold-light), var(--color-gold) 55%, var(--color-gold-deep));
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
